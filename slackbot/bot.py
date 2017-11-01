@@ -17,14 +17,19 @@ class Slackbot:
         self.scored_user = namedtuple('ScoredUser', ['user', 'score'])
         self.scores = scores
         self.max_assignment = 50
+
         print("Initialising Slack client")
         self.slack_client = SlackClient(self.api_token)
+        self.users = self._get_users()
 
     def main(self):
+        second = 0
         try:
             if self.slack_client.rtm_connect():
                 print('Running rtm client')
                 while True:
+                    if second == 0:
+                        self.users = self._get_users()
                     events = self.slack_client.rtm_read()
                     for event in events:
                         logger.debug(f"Event logged: {event}")
@@ -42,6 +47,7 @@ class Slackbot:
                             elif text == 'scoreboard':
                                 self._print_scoreboard(event)
                     time.sleep(1)
+                    second = second + 1 % 600
             else:
                 print('Connection failed, invalid token?')
         except Exception as e:
@@ -50,7 +56,9 @@ class Slackbot:
 
     def _parse_and_update(self, event: dict):
         subject, points, reason = parse_message(event['text'])
-        if subject[2:-1] == event.get('user'):
+        if subject not in self.users:
+            return
+        elif subject[2:-1] == event.get('user'):
             self.slack_client.api_call(
                 'chat.postMessage',
                 channel=event['channel'],
@@ -81,7 +89,7 @@ class Slackbot:
         response = f'{subject}: {old_score} -> {self.scores.get(subject, 0)} {reason}'
         self.slack_client.api_call(
             'chat.postMessage',
-            channel=channel,
+            channel='C7Q8H378C',
             text=response,
             as_user='true:'
         )
@@ -116,6 +124,18 @@ class Slackbot:
             text=response,
             as_user='true:'
         )
+
+    def _get_users(self):
+        users_dict = {}
+        raw_users = self.slack_client.api_call('users.list')
+        for user in raw_users['members']:
+            users_dict[user['id']] = user
+        return users_dict
+
+    # def _add_zero_users(self):
+    #     for user in self._get_users():
+    #         if '<@' + user + '>' not in self.scores:
+    #             self.scores['<@' + user + '>'] = 0
 
 
 def parse_message(message: str) -> Tuple[str, int, str]:
