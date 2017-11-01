@@ -35,7 +35,7 @@ def add_points():
     # elif text == 'scoreboard':
     #     _print_scoreboard(event)
     return jsonify(text=request.form)
-    return Response(), 200
+    # return Response(), 200
 
 #
 # class Slackbot:
