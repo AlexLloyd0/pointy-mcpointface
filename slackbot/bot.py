@@ -1,5 +1,4 @@
-from slackclient import SlackClient
-import time
+from flask import Flask, request, Response, jsonify
 import re
 import json
 import logging
@@ -18,11 +17,26 @@ class Slackbot:
         self.scores = scores
         self.max_assignment = 50
 
-        print("Initialising Slack client")
-        self.slack_client = SlackClient(self.api_token)
+        self.app = Flask(__name__)
+        self.app.run(host='0.0.0.0')
+
         self.users = self._get_users()
 
     def main(self):
+
+        @self.app.route('/add-points', methods=['POST'])
+        def add_points():
+            text = request.form.get('text', '')
+            if self.change_score.match(text):
+                self._parse_and_update(event)
+            elif text.startswith('score '):
+                self._post_score(event)
+            elif text == 'scoreboard':
+                self._print_scoreboard(event)
+            if 'that would be great' in text.lower() and link not in text:
+                return jsonify(text=link)
+            return Response(), 200
+
         second = 0
         try:
             if self.slack_client.rtm_connect():
