@@ -8,6 +8,8 @@ name = "pypi"
 [packages]
 
 slackclient = "*"
+flask = "*"
+gunicorn = "*"
 
 
 [dev-packages]
