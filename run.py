@@ -1,20 +1,12 @@
 import slackbot.bot
-import os
-import json
-import logging
+import yaml
+import logging.config
 
 
 def setup_logging():
-    logger = logging.getLogger(__name__)
-
-    # create console handler
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-
-    # add ch to logger
-    logger.addHandler(ch)
+    with open('logging.yaml', 'rt') as log_file:
+        config = yaml.safe_load(log_file.read())
+    logging.config.dictConfig(config)
 
 
 if __name__ == '__main__':

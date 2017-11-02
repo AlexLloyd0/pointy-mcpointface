@@ -23,18 +23,19 @@ scored_user = namedtuple('ScoredUser', ['user', 'score'])
 #         scores = {}
 #         json.dump(scores, file)
 
+
 @app.route('/add-points', methods=['POST'])
 def add_points():
-    text = request.form.get('text', '')
-    team_id = request.form.get('team_id', '')
-    #
+    return 'Hello, world!'
+    # text = request.form.get('text', '')
+    # team_id = request.form.get('team_id', '')
     # if change_score.match(text):
     #     _parse_and_update(event)
     # elif text.startswith('score '):
     #     _post_score(event)
     # elif text == 'scoreboard':
     #     _print_scoreboard(event)
-    return jsonify(text=request.form)
+    # return jsonify(request.form)
     # return Response(), 200
 
 #     def _parse_and_update(self, event: dict):
@@ -146,6 +147,7 @@ def add_points():
 #         reason = ' '.join(space_split[2:]) if len(space_split) > 2 else ''
 #         logger.debug(f'Message parsed: {subject} needs {score} point{"s" if score != 1 else " "} {reason}')
 #         return subject, score, reason
+
 
 def main():
     app.run(host='0.0.0.0')
