@@ -36,6 +36,7 @@ def add_points():
     logger.info(f"Request: {request.form}")
     return str(request.form)
 
+
 def parse_add_points():
     pass
 
