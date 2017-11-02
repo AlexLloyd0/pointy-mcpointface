@@ -1,4 +1,4 @@
-from slackbot.bot import Slackbot
+import slackbot.bot
 import os
 import json
 import logging
@@ -19,15 +19,4 @@ def setup_logging():
 
 if __name__ == '__main__':
     setup_logging()
-    token = os.environ.get('SLACKBOT_POINTY_TOKEN')
-
-    try:
-        with open('scores.json', 'r') as file:
-            scores = json.load(file)
-    except FileNotFoundError:
-        with open('scores.json', 'w') as file:
-            scores = {}
-            json.dump(scores, file)
-
-    bot = Slackbot(token, scores)
-    bot.main()
+    slackbot.bot.main()
