@@ -1,1 +1,1 @@
-web: gunicorn pointy:app
+web: gunicorn slackbot.bot:app
