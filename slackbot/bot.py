@@ -56,16 +56,16 @@ class Slackbot:
 
     def _parse_and_update(self, event: dict):
         subject, points, reason = parse_message(event['text'])
-        if subject not in self.users:
+        stripped_subject = subject[2:-1]
+        if stripped_subject not in self.users:
             return
-        elif subject[2:-1] == event.get('user'):
+        elif stripped_subject == event.get('user'):
             self.slack_client.api_call(
                 'chat.postMessage',
                 channel=event['channel'],
-                text="Naughty! You can't assign yourself points! -1 for you",
+                text="Naughty! You can't assign yourself points!",
                 as_user='true:'
             )
-            self._update_score(subject, -1, event['channel'], 'for trying to give himself points')
         elif abs(points) > self.max_assignment:
             self.slack_client.api_call(
                 'chat.postMessage',
