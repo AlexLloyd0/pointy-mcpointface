@@ -36,6 +36,9 @@ def add_points():
     logger.info(f"Request: {request.form}")
     return str(request.form)
 
+def parse_add_points():
+    pass
+
 
 # def _parse_and_update(self, event: dict):
 #     subject, points, reason = parse_message(event['text'])
