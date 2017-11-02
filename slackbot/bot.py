@@ -13,52 +13,50 @@ app = Flask(__name__)
 
 change_score = re.compile('^([^+\-=])+ ((\+\+|--)|((\+=|-=) [0-9]+))( .*)?$')
 scored_user = namedtuple('ScoredUser', ['user', 'score'])
-# token = os.environ.get('SLACKBOT_POINTY_TOKEN')
-#
-# try:
-#     with open('scores.json', 'r') as file:
-#         scores = json.load(file)
-# except FileNotFoundError:
-#     with open('scores.json', 'w') as file:
-#         scores = {}
-#         json.dump(scores, file)
+# @@@TODO@@@ verification token
+
+try:
+    with open('scores.json', 'r') as file:
+        scores = json.load(file)
+except FileNotFoundError:
+    with open('scores.json', 'w') as file:
+        scores = {}
+        json.dump(scores, file)
 
 
 @app.route('/add-points', methods=['POST'])
 def add_points():
-    return 'Hello, world!'
-    # text = request.form.get('text', '')
+    text = request.form.get('text', '')
     # team_id = request.form.get('team_id', '')
-    # if change_score.match(text):
-    #     _parse_and_update(event)
-    # elif text.startswith('score '):
-    #     _post_score(event)
-    # elif text == 'scoreboard':
-    #     _print_scoreboard(event)
+    # _parse_and_update(text)
+    # response = {
+    #     "response_type": "in_channel"
+    # }
     # return jsonify(request.form)
-    # return Response(), 200
+    return str(request.form)
 
-#     def _parse_and_update(self, event: dict):
-#         subject, points, reason = parse_message(event['text'])
-#         stripped_subject = subject[2:-1]
-#         if stripped_subject not in self.users:
-#             return
-#         elif stripped_subject == event.get('user'):
-#             self.slack_client.api_call(
-#                 'chat.postMessage',
-#                 channel=event['channel'],
-#                 text="Naughty! You can't assign yourself points!",
-#                 as_user='true:'
-#             )
-#         elif abs(points) > self.max_assignment:
-#             self.slack_client.api_call(
-#                 'chat.postMessage',
-#                 channel=event['channel'],
-#                 text="Don't be silly now.",
-#                 as_user='true:'
-#             )
-#         else:
-#             self._update_score(subject, points, reason, event['channel'])
+
+def _parse_and_update(self, event: dict):
+    subject, points, reason = parse_message(event['text'])
+    stripped_subject = subject[2:-1]
+    if stripped_subject not in self.users:
+        return
+    elif stripped_subject == event.get('user'):
+        self.slack_client.api_call(
+            'chat.postMessage',
+            channel=event['channel'],
+            text="Naughty! You can't assign yourself points!",
+            as_user='true:'
+        )
+    elif abs(points) > self.max_assignment:
+        self.slack_client.api_call(
+            'chat.postMessage',
+            channel=event['channel'],
+            text="Don't be silly now.",
+            as_user='true:'
+        )
+    else:
+        self._update_score(subject, points, reason, event['channel'])
 #
 #     def _update_score(self, subject: str, points: int, reason: str, channel: str):
 #         print(f"Adding {points} to {subject}'s score")
