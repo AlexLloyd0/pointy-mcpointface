@@ -11,6 +11,7 @@ slackclient = "*"
 flask = "*"
 gunicorn = "*"
 pyyaml = "*"
+"psycopg2" = "*"
 
 
 [dev-packages]

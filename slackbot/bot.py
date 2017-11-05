@@ -1,155 +1,217 @@
 from flask import Flask, request, Response, jsonify
 import re
-import json
 import logging
 import os
+import psycopg2
 
-from typing import Tuple, Dict, Optional
-from collections import namedtuple
+from psycopg2.extensions import AsIs
+from typing import Tuple, Dict, Optional, List
+from urllib import parse
 
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-change_score = re.compile('^([^+\-=])+ ((\+\+|--)|((\+=|-=) [0-9]+))( .*)?$')
-scored_user = namedtuple('ScoredUser', ['user', 'score'])
-# @@@TODO@@@ verification token
+# @@@TODO@@@ check verification token
 
-try:
-    with open('scores.json', 'r') as file:
-        scores = json.load(file)
-except FileNotFoundError:
-    with open('scores.json', 'w') as file:
-        scores = {}
-        json.dump(scores, file)
+parse.uses_netloc.append("postgres")
+url = parse.urlparse(os.environ["DATABASE_URL"])
+
+add_points_re = re.compile("^<[A-Z][0-9]+(\|[ALPHANUMERIC]+)?> [0-9]( .*)?$")  # TODO: alphanumeric
+check_score_re = re.compile("^<[A-Z][0-9]+(\|[ALPHANUMERIC]+)?>$")  # TODO: alphanumeric
+
+MAX_SCORE_ADD = 20
 
 
 @app.route('/add-points', methods=['POST'])
 def add_points():
+    logger.debug(f"Add points request: {request.form}")
     text = request.form.get('text', '')
-    # team_id = request.form.get('team_id', '')
-    # _parse_and_update(text)
-    # response = {
-    #     "response_type": "in_channel"
-    # }
-    # return jsonify(request.form)
-    logger.info(f"Request: {request.form}")
-    return str(request.form)
+    try:
+        subject_id, points, reason = parse_add_points(text)
+    except AddPointsError:
+        return 'Invalid synatax'  # TODO
+    if subject_id == request.form.get(''):  # TODO
+        return "can't give yourself points"  # TODO
+    if abs(points) > MAX_SCORE_ADD:
+        return f"can't give more than {MAX_SCORE_ADD}"  # TODO
+    team_id = request.form.get('team_id', '')
+    with psycopg2.connect(database=url.path[1:],
+                          user=url.username,
+                          password=url.password,
+                          host=url.hostname,
+                          port=url.port) as conn:
+
+        current_score = check_score(conn, team_id, subject_id)
+        new_score = current_score + points
+        update_database(conn, team_id, subject_id, new_score)
+        response = {
+            "response_type": "in_channel"  # TODO
+        }
+
+        logger.debug(f"Response: {response}")
+        return response
 
 
-def parse_add_points():
-    pass
+@app.route('/get-score', methods=['POST'])
+def get_score():
+    logger.debug(f"Get score request: {request.form}")
+    text = request.form.get('text', '')
+    try:
+        subject_id = parse_get_score(text)
+    except GetScoreError:
+        return 'some kind of failure message'  # TODO
+    team_id = request.form.get('team_id', '')
+    with psycopg2.connect(database=url.path[1:],
+                          user=url.username,
+                          password=url.password,
+                          host=url.hostname,
+                          port=url.port) as conn:
+        try:
+            score = check_score(conn, team_id, subject_id)
+        except:  # TODO: except what?
+            score = 0
+
+        response = {
+            "response_type": "in_channel",  # TODO
+            "text": f"Score: {score}"
+        }
+
+        logger.debug(f"Response: {response}")
+        return response
 
 
-# def _parse_and_update(self, event: dict):
-#     subject, points, reason = parse_message(event['text'])
-#     stripped_subject = subject[2:-1]
-#     if stripped_subject not in self.users:
-#         return
-#     elif stripped_subject == event.get('user'):
-#         self.slack_client.api_call(
-#             'chat.postMessage',
-#             channel=event['channel'],
-#             text="Naughty! You can't assign yourself points!",
-#             as_user='true:'
-#         )
-#     elif abs(points) > self.max_assignment:
-#         self.slack_client.api_call(
-#             'chat.postMessage',
-#             channel=event['channel'],
-#             text="Don't be silly now.",
-#             as_user='true:'
-#         )
-#     else:
-#         self._update_score(subject, points, reason, event['channel'])
-#
-#     def _update_score(self, subject: str, points: int, reason: str, channel: str):
-#         print(f"Adding {points} to {subject}'s score")
-#         if subject not in self.scores:
-#             self.scores[subject] = 0
-#         old_score = self.scores[subject]
-#         self.scores[subject] += points
-#         if self.scores[subject] == 0:
-#             del self.scores[subject]
-#         with open('scores.json', 'w+') as file:
-#             json.dump(self.scores, file)
-#         response = f'{subject}: {old_score} -> {self.scores.get(subject, 0)} {reason}'
-#         self.slack_client.api_call(
-#             'chat.postMessage',
-#             channel='C7Q8H378C',
-#             text=response,
-#             as_user='true:'
-#         )
-#
-#     def _post_score(self, event: dict):
-#         subject = 'score '.join(event['text'].split('score ')[1:])
-#         print(f"Posting {subject}'s score to channel {event['channel']}")
-#         score = self.scores.get(subject, 0)
-#         response = f'Points make prizes!\n{subject} has {score} point{"s" if score != 1 else " "}'
-#         self.slack_client.api_call(
-#             'chat.postMessage',
-#             channel=event['channel'],
-#             text=response,
-#             as_user='true:'
-#         )
-#
-#     def _print_scoreboard(self, event: dict):
-#         print(f"Posting scoreboard to channel {event['channel']}")
-#         scored_tuples = [self.scored_user(subject, self.scores[subject]) for subject in self.scores]
-#         ordered_tuples = sorted(scored_tuples, key=lambda x: x.score, reverse=True)
-#         response = f'Here\'s a list of my favourite people:'
-#         for i in range(len(ordered_tuples)):
-#             subject, score = ordered_tuples[i]
-#             response += f'\n{i+1}. {subject} [{score} point{"s" if score != 1 else ""}]'
-#             if i == 0:
-#                 response += ' :crown:'
-#             elif i + 1 == len(ordered_tuples):
-#                 response += ' :hankey:'
-#         self.slack_client.api_call(
-#             'chat.postMessage',
-#             channel=event['channel'],
-#             text=response,
-#             as_user='true:'
-#         )
-#
-#     def _get_users(self):
-#         users_dict = {}
-#         raw_users = self.slack_client.api_call('users.list')
-#         for user in raw_users['members']:
-#             users_dict[user['id']] = user
-#         return users_dict
-#
-#     # def _add_zero_users(self):
-#     #     for user in self._get_users():
-#     #         if '<@' + user + '>' not in self.scores:
-#     #             self.scores['<@' + user + '>'] = 0
-#
-#
-# def parse_message(message: str) -> Tuple[str, int, str]:
-#     logger.debug(f"Parsing {message}")
-#     if '++' in message:
-#         split = message.split('+')
-#         subject = split[0][:-1]
-#         reason = '+'.join(split[2:])
-#         logger.debug(f"Message parsed: {subject} needs 1 point {reason}")
-#         return subject, 1, reason
-#     elif '--' in message:
-#         split = message.split('-')
-#         subject = split[0][:-1]
-#         reason = '-'.join(split[2:])
-#         logger.debug(f"Message parsed: {subject} needs -1 point {reason}")
-#         return subject, -1, reason
-#     else:
-#         equal_split = message.split('=')
-#         subject = equal_split[0][:-2]
-#         sign = equal_split[0][-1]
-#         space_split = equal_split[1].split(' ')
-#         str_score = space_split[1]
-#         score = int(sign + str_score)
-#
-#         reason = ' '.join(space_split[2:]) if len(space_split) > 2 else ''
-#         logger.debug(f'Message parsed: {subject} needs {score} point{"s" if score != 1 else " "} {reason}')
-#         return subject, score, reason
+@app.route('/get-scoreboard', methods=['POST'])
+def get_scoreboard():
+    logger.debug(f"Scoreboard request: {request.form}")
+    if request.form.get('text', ''):
+        return 'some kind of failure message'  # TODO
+    team_id = request.form.get('team_id', '')
+    with psycopg2.connect(database=url.path[1:],
+                          user=url.username,
+                          password=url.password,
+                          host=url.hostname,
+                          port=url.port) as conn:
+        scoreboard = check_all_scores(conn, team_id)
+        response = {
+            "response_type": "in_channel",  # TODO
+        }
+
+        logger.debug(f"Response: {response}")
+        return response
+
+
+@app.route('/add-team', methods=['POST'])
+def add_team():
+    logger.debug(f"Add team request: {request.form}")
+    # TODO: get team id
+    team_id = ''
+    with psycopg2.connect(database=url.path[1:],
+                          user=url.username,
+                          password=url.password,
+                          host=url.hostname,
+                          port=url.port) as conn:
+        setup_team(conn, team_id)
+
+
+class AddPointsError(SyntaxError):
+    pass  # TODO
+
+
+class GetScoreError(SyntaxError):
+    pass  # TODO
+
+
+def parse_add_points(text: str) -> Tuple[str, int, str]:
+    if not add_points_re.match(text):
+        raise AddPointsError(text)
+    ltidentity, pointreason = text.split('>')[0]
+    points = int(pointreason[1:].split(' ')[0])
+    reason = ' '.join(pointreason[1:].split(' ')[1:])
+    identity = ltidentity[1:]
+    user_id, display_name = identity.split('|')  # TODO ????
+    return user_id, points, reason
+
+
+def parse_get_score(text: str) -> str:
+    if not get_score.match(text):
+        raise GetScoreError(text)
+    user_id, display_name = text[1:-1].split('|')
+    return user_id
+
+
+# Database functions:
+
+
+def check_score(conn, team_id: str, user_id: str) -> int:
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT score FROM points.%s WHERE user_id = %s""",
+            (AsIs(team_id), user_id)
+        )
+        score = cur.fetchone()[0]
+    conn.commit()
+    return score
+
+
+def check_all_scores(conn, team_id: str) -> List[Tuple[str, int]]:
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT * FROM points.%s
+            ORDER BY score DESC""",
+            (AsIs(team_id))
+        )
+        scoreboard = cur.fetchall()
+    conn.commit()
+    return scoreboard
+
+
+def update_database(conn, team_id: str, user_id: str, new_score: int):
+    with conn.cursor() as cur:
+        try:
+            cur.execute(
+                """INSERT INTO points.%s (user_id, score)
+                VALUES (%s, %s)""",  # TODO update not insert
+                (AsIs(team_id), user_id, new_score)
+            )
+        except:  # TODO: user not found
+            raise
+    conn.commit()
+
+
+def setup_team(conn, team_id: str):
+    with conn.cursor() as cur:
+        cur.execute(
+            """CREATE TABLE points.%s (
+            user_id TEXT PRIMARY KEY,
+            score INTEGER NOT NULL DEFAULT 0)""",
+            (team_id,)
+        )
+        cur.execute(
+            """INSERT INTO dbo.teams (team_id)
+            VALUES (%s)""",
+            (team_id,)
+        )
+    conn.commit()
+    user_ids = []
+    # TODO Get all (non-bot) users
+    for uid in user_ids:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO points.%s (user_id, score)
+                VALUES (%s, %s)""",
+                (uid, 0)
+            )
+    # TODO set up event listener for all new users to add, and all removed users to delete
+
+
+def setup_db(conn):
+    with conn.cursor() as cur:
+        cur.execute("""CREATE SCHEMA points""")
+        cur.execute("""CREATE SCHEMA dbo""")
+        cur.execute("""CREATE TABLE dbo.teams (team_id TEXT PRIMARY KEY)""")
+    conn.commit()
+
 
 
 def main():
