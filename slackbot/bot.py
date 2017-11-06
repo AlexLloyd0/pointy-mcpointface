@@ -18,8 +18,8 @@ app = Flask(__name__)
 parse.uses_netloc.append("postgres")
 url = parse.urlparse(os.environ["DATABASE_URL"])
 
-add_points_re = re.compile("^<[A-Z][a-zA-Z0-9]+(\|[a-zA-Z0-9]+)?> [0-9]( .*)?$")
-check_score_re = re.compile("^<[A-Z][a-zA-Z0-9]+(\|[a-zA-Z0-9]+)?> ?$")
+add_points_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> [0-9]+( .*)?$")
+check_score_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> ?$")
 api_token = os.environ.get('POINTY_APP_TOKEN')
 
 MAX_SCORE_ADD = 20
