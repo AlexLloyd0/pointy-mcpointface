@@ -1,12 +1,14 @@
 from typing import List, Tuple
 import os
 
+from urllib import parse
 import psycopg2
 from psycopg2.extensions import AsIs
 from slackclient import SlackClient
 
 api_token = os.environ.get('POINTY_APP_TOKEN')
 
+url = parse.urlparse(os.environ["DATABASE_URL"])
 
 def check_score(conn, team_id: str, user_id: str, retry: bool = True) -> int:
     with conn.cursor() as cur:
@@ -87,16 +89,36 @@ def setup_team(conn, team_id: str):
         presence=False
     )
     for user in resp['members']:
-        if user['deleted'] is False and user['is_bot'] is False and user['id'] is not 'USLACKBOT':
+        if user['deleted'] is False and user['is_bot'] is False and user['id'] != 'USLACKBOT':
             user_ids.append(user['id'])
 
     with conn.cursor() as cur:
-        args_str = ','.join(cur.mogrify("(%s,0)", uid) for uid in user_ids)
+        args_str = b",".join(cur.mogrify('(%s,0)', (uid,)) for uid in user_ids)
         cur.execute(
-            """INSERT INTO points.%s (user_id, score)
-            VALUES """ + args_str
+            b"""INSERT INTO points.%s (user_id, score)
+            VALUES """ + args_str, (AsIs(team_id),)
         )
     # TODO set up event listener for all new users to add, and all removed users to delete
+
+
+def remove_team(conn, team_id: str):
+    with conn.cursor() as cur:
+        try:
+            cur.execute(
+                """DROP TABLE points.%s""",
+                (AsIs(team_id),)
+            )
+        except psycopg2.ProgrammingError:
+            conn.rollback()
+        try:
+            cur.execute(
+                """DELETE FROM dbo.teams
+                WHERE team_id = %s""",
+                (team_id,)
+            )
+        except psycopg2.ProgrammingError:
+            conn.rollback()
+    conn.commit()
 
 
 def setup_db(conn):
