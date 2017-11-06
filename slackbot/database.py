@@ -17,9 +17,9 @@ def check_score(conn, team_id: str, user_id: str, retry: bool = True) -> int:
             )
             score = cur.fetchone()[0]
         except psycopg2.ProgrammingError:
+            conn.rollback()
             setup_team(conn, team_id)
             if retry:
-                conn.rollback()
                 return check_score(conn, team_id, user_id, False)
             else:
                 raise
@@ -37,9 +37,9 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
             )
             scoreboard = cur.fetchall()
         except psycopg2.ProgrammingError:
+            conn.rollback()
             setup_team(conn, team_id)
             if retry:
-                conn.rollback()
                 return check_all_scores(conn, team_id, False)
             else:
                 raise
@@ -57,9 +57,9 @@ def update_database(conn, team_id: str, user_id: str, new_score: int, retry: boo
                 (AsIs(team_id), new_score, user_id)
             )
         except psycopg2.ProgrammingError:
+            conn.rollback()
             setup_team(conn, team_id)
             if retry:
-                conn.rollback()
                 return update_database(conn, team_id, user_id, new_score, False)
             else:
                 raise
