@@ -1,10 +1,11 @@
 from typing import List, Tuple
+import os
 
 import psycopg2
 from psycopg2.extensions import AsIs
 from slackclient import SlackClient
 
-from slackbot.bot import api_token
+api_token = os.environ.get('POINTY_APP_TOKEN')
 
 
 def check_score(conn, team_id: str, user_id: str, retry: bool = True) -> int:

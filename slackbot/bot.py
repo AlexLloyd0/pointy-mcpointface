@@ -15,7 +15,6 @@ app = Flask(__name__)
 
 parse.uses_netloc.append("postgres")
 url = parse.urlparse(os.environ["DATABASE_URL"])
-api_token = os.environ.get('POINTY_APP_TOKEN')
 verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 
 add_points_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> [0-9]+( .*)?$")
@@ -121,14 +120,6 @@ def add_team():
         setup_team(conn, team_id)
 
 
-class AddPointsError(SyntaxError):
-    pass  # TODO
-
-
-class GetScoreError(SyntaxError):
-    pass  # TODO
-
-
 def parse_add_points(text: str) -> Tuple[str, int, str]:
     if not add_points_re.match(text):
         raise AddPointsError(text)
@@ -146,6 +137,14 @@ def parse_get_score(text: str) -> str:
         raise GetScoreError(text)
     user_id, display_name = text[1:-1].split('|')
     return user_id
+
+
+class AddPointsError(SyntaxError):
+    pass
+
+
+class GetScoreError(SyntaxError):
+    pass
 
 
 def main():
