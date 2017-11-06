@@ -27,7 +27,7 @@ MAX_SCORE_ADD = 20
 
 @app.route('/add-points', methods=['POST'])
 def add_points():
-    logger.debug(f"Add points request: {request.form}")
+    logger.warning(f"Add points request: {request.form}")
     text = request.form.get('text', '')
     try:
         subject_id, points, reason = parse_add_points(text)
