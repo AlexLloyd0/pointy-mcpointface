@@ -7,8 +7,8 @@ from psycopg2.extensions import AsIs
 from slackclient import SlackClient
 
 api_token = os.environ.get('POINTY_APP_TOKEN')
-
 url = parse.urlparse(os.environ["DATABASE_URL"])
+
 
 def check_score(conn, team_id: str, user_id: str, retry: bool = True) -> int:
     with conn.cursor() as cur:
