@@ -87,10 +87,11 @@ def setup_team(conn, team_id: str):
         presence=False
     )
     for user in resp['members']:
-        if user['deleted'] is False and user['is_bot'] is False:
+        if user['deleted'] is False and user['is_bot'] is False and user['id'] is not 'USLACKBOT':
             user_ids.append(user['id'])
-    args_str = ','.join(cur.mogrify("(%s,0)", uid) for uid in user_ids)
+
     with conn.cursor() as cur:
+        args_str = ','.join(cur.mogrify("(%s,0)", uid) for uid in user_ids)
         cur.execute(
             """INSERT INTO points.%s (user_id, score)
             VALUES """ + args_str
