@@ -70,10 +70,8 @@ def get_score():
                           password=url.password,
                           host=url.hostname,
                           port=url.port) as conn:
-        try:
-            score = check_score(conn, team_id, subject_id)
-        except:  # TODO: except what?
-            score = 0
+
+        score = check_score(conn, team_id, subject_id)
 
         response = {
             "response_type": "in_channel",  # TODO
@@ -239,7 +237,6 @@ def setup_db(conn):
         cur.execute("""CREATE TABLE dbo.teams (team_id TEXT PRIMARY KEY)""")
     conn.commit()
 
-import pdb;pdb.set_trace()
 
 def main():
     app.run(host='0.0.0.0')
