@@ -1,32 +1,33 @@
-from flask import Flask, request, Response, jsonify
-import re
 import logging
 import os
-import psycopg2
-from slackclient import SlackClient
-
-from psycopg2.extensions import AsIs
-from typing import Tuple, Dict, Optional, List
+import re
+from typing import Tuple
 from urllib import parse
+
+import psycopg2
+from flask import Flask, request
+
+from slackbot.database import check_score, check_all_scores, update_database, setup_team
 
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# @@@TODO@@@ check verification token
-
 parse.uses_netloc.append("postgres")
 url = parse.urlparse(os.environ["DATABASE_URL"])
+api_token = os.environ.get('POINTY_APP_TOKEN')
+verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 
 add_points_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> [0-9]+( .*)?$")
 check_score_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> ?$")
-api_token = os.environ.get('POINTY_APP_TOKEN')
 
 MAX_SCORE_ADD = 20
 
 
 @app.route('/add-points', methods=['POST'])
 def add_points():
+    if request.form.get('token') != verify_token:
+        return
     logger.debug(f"Add points request: {request.form}")
     text = request.form.get('text', '')
     try:
@@ -58,6 +59,8 @@ def add_points():
 
 @app.route('/get-score', methods=['POST'])
 def get_score():
+    if request.form.get('token') != verify_token:
+        return
     logger.debug(f"Get score request: {request.form}")
     text = request.form.get('text', '')
     try:
@@ -84,6 +87,8 @@ def get_score():
 
 @app.route('/get-scoreboard', methods=['POST'])
 def get_scoreboard():
+    if request.form.get('token') != verify_token:
+        return
     logger.debug(f"Scoreboard request: {request.form}")
     team_id = request.form.get('team_id', '')
     with psycopg2.connect(database=url.path[1:],
@@ -103,6 +108,8 @@ def get_scoreboard():
 
 @app.route('/add-team', methods=['POST'])
 def add_team():
+    if request.form.get('token') != verify_token:
+        return
     logger.debug(f"Add team request: {request.form}")
     # TODO: get team id
     team_id = ''
@@ -125,7 +132,8 @@ class GetScoreError(SyntaxError):
 def parse_add_points(text: str) -> Tuple[str, int, str]:
     if not add_points_re.match(text):
         raise AddPointsError(text)
-    ltidentity, pointreason = text.split('>')[0]
+    ltidentity = text.split('>')[0]
+    pointreason = '>'.join(text.split('>')[1:])
     points = int(pointreason[1:].split(' ')[0])
     reason = ' '.join(pointreason[1:].split(' ')[1:])
     identity = ltidentity[1:]
@@ -138,104 +146,6 @@ def parse_get_score(text: str) -> str:
         raise GetScoreError(text)
     user_id, display_name = text[1:-1].split('|')
     return user_id
-
-
-# Database functions:
-
-
-def check_score(conn, team_id: str, user_id: str, retry: bool = True) -> int:
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
-                """SELECT score FROM points.%s WHERE user_id = %s""",
-                (AsIs(team_id), user_id)
-            )
-            score = cur.fetchone()[0]
-        except psycopg2.ProgrammingError:
-            setup_team(conn, team_id)
-            if retry:
-                return check_score(conn, team_id, user_id, False)
-            else:
-                raise
-    conn.commit()
-    return score
-
-
-def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, int]]:
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
-                """SELECT * FROM points.%s
-                ORDER BY score DESC""",
-                (AsIs(team_id),)
-            )
-            scoreboard = cur.fetchall()
-        except psycopg2.ProgrammingError:
-            setup_team(conn, team_id)
-            if retry:
-                return check_all_scores(conn, team_id, False)
-            else:
-                raise
-    conn.commit()
-    return scoreboard
-
-
-def update_database(conn, team_id: str, user_id: str, new_score: int, retry: bool = True) -> bool:
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
-                """UPDATE points.%s
-                SET score = %s
-                WHERE user_id = %s""",
-                (AsIs(team_id), new_score, user_id)
-            )
-        except psycopg2.ProgrammingError:
-            setup_team(conn, team_id)
-            if retry:
-                return update_database(conn, team_id, user_id, new_score, False)
-            else:
-                raise
-    conn.commit()  # TODO: return something
-
-
-def setup_team(conn, team_id: str):
-    with conn.cursor() as cur:
-        cur.execute(
-            """CREATE TABLE points.%s (
-            user_id TEXT PRIMARY KEY,
-            score INTEGER NOT NULL DEFAULT 0)""",
-            (team_id,)
-        )
-        cur.execute(
-            """INSERT INTO dbo.teams (team_id)
-            VALUES (%s)""",
-            (team_id,)
-        )
-    conn.commit()
-    user_ids = []
-    slack_client = SlackClient(api_token)
-    resp = slack_client.api_call(
-        'users.list',
-        presence=False
-    )
-    for user in resp['members']:
-        if user['deleted'] is False and user['is_bot'] is False:
-            user_ids.append(user['id'])
-    args_str = ','.join(cur.mogrify("(%s,0)", uid) for uid in user_ids)
-    with conn.cursor() as cur:
-        cur.execute(
-            """INSERT INTO points.%s (user_id, score)
-            VALUES """ + args_str
-        )
-    # TODO set up event listener for all new users to add, and all removed users to delete
-
-
-def setup_db(conn):
-    with conn.cursor() as cur:
-        cur.execute("""CREATE SCHEMA points""")
-        cur.execute("""CREATE SCHEMA dbo""")
-        cur.execute("""CREATE TABLE dbo.teams (team_id TEXT PRIMARY KEY)""")
-    conn.commit()
 
 
 def main():
