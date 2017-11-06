@@ -69,7 +69,7 @@ def setup_team(conn, team_id: str):
             """CREATE TABLE points.%s (
             user_id TEXT PRIMARY KEY,
             score INTEGER NOT NULL DEFAULT 0)""",
-            (team_id,)
+            (AsIs(team_id),)
         )
         cur.execute(
             """INSERT INTO dbo.teams (team_id)
