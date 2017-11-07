@@ -1,13 +1,13 @@
 import logging
 import os
-import re
-from typing import Tuple
 from urllib import parse
 
 import psycopg2
 from flask import Flask, request
 
+from slackbot.app_logic import parse_add_points, parse_get_score
 from slackbot.database import check_score, check_all_scores, update_database, setup_team
+from slackbot.exceptions import AddPointsError, GetScoreError, UserNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +17,6 @@ parse.uses_netloc.append("postgres")
 url = parse.urlparse(os.environ["DATABASE_URL"])
 verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 
-add_points_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> [0-9]+( .*)?$")
-check_score_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> ?$")
 
 MAX_SCORE_ADD = 20
 
@@ -43,8 +41,10 @@ def add_points():
                           password=url.password,
                           host=url.hostname,
                           port=url.port) as conn:
-
-        current_score = check_score(conn, team_id, subject_id)
+        try:
+            current_score = check_score(conn, team_id, subject_id)
+        except UserNotFound:
+            return "User not found"
         new_score = current_score + points
         update_database(conn, team_id, subject_id, new_score)
         response = {
@@ -72,9 +72,10 @@ def get_score():
                           password=url.password,
                           host=url.hostname,
                           port=url.port) as conn:
-
-        score = check_score(conn, team_id, subject_id)
-
+        try:
+            score = check_score(conn, team_id, subject_id)
+        except UserNotFound:
+            return "User not found"
         response = {
             "response_type": "in_channel",  # TODO
             "text": f"Score: {score}"
@@ -118,33 +119,6 @@ def add_team():
                           host=url.hostname,
                           port=url.port) as conn:
         setup_team(conn, team_id)
-
-
-def parse_add_points(text: str) -> Tuple[str, int, str]:
-    if not add_points_re.match(text):
-        raise AddPointsError(text)
-    ltidentity = text.split('>')[0]
-    pointreason = '>'.join(text.split('>')[1:])
-    points = int(pointreason[1:].split(' ')[0])
-    reason = ' '.join(pointreason[1:].split(' ')[1:])
-    identity = ltidentity[1:]
-    user_id, display_name = identity.split('|')  # TODO ????
-    return user_id, points, reason
-
-
-def parse_get_score(text: str) -> str:
-    if not get_score.match(text):
-        raise GetScoreError(text)
-    user_id, display_name = text[1:-1].split('|')
-    return user_id
-
-
-class AddPointsError(SyntaxError):
-    pass
-
-
-class GetScoreError(SyntaxError):
-    pass
 
 
 def main():

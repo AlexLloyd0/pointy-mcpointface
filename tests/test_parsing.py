@@ -1,4 +1,5 @@
-from slackbot.bot import parse_get_score, parse_add_points
+from slackbot.app_logic import parse_add_points, parse_get_score
+
 # TODO hypothesis testing?
 valid_add_points = '<@U1234|Alex Lloyd> 10'  # TODO how to run test on list of input: expected response
 invalid_add_points = 'U1234|Alex Lloyd 10'

@@ -6,6 +6,8 @@ import psycopg2
 from psycopg2.extensions import AsIs
 from slackclient import SlackClient
 
+from slackbot.exceptions import UserNotFound
+
 api_token = os.environ.get('POINTY_APP_TOKEN')
 url = parse.urlparse(os.environ["DATABASE_URL"])
 
@@ -17,7 +19,10 @@ def check_score(conn, team_id: str, user_id: str, retry: bool = True) -> int:
                 """SELECT score FROM points.%s WHERE user_id = %s""",
                 (AsIs(team_id), user_id)
             )
-            score = cur.fetchone()[0]
+            resp = cur.fetchone()
+            if not resp:
+                raise UserNotFound
+            score = resp[0]
         except psycopg2.ProgrammingError:
             conn.rollback()
             setup_team(conn, team_id)
@@ -70,17 +75,23 @@ def update_database(conn, team_id: str, user_id: str, new_score: int, retry: boo
 
 def setup_team(conn, team_id: str):
     with conn.cursor() as cur:
-        cur.execute(
-            """CREATE TABLE points.%s (
-            user_id TEXT PRIMARY KEY,
-            score INTEGER NOT NULL DEFAULT 0)""",
-            (AsIs(team_id),)
-        )
-        cur.execute(
-            """INSERT INTO dbo.teams (team_id)
-            VALUES (%s)""",
-            (team_id,)
-        )
+        try:
+            cur.execute(
+                """CREATE TABLE points.%s (
+                user_id TEXT PRIMARY KEY,
+                score INTEGER NOT NULL DEFAULT 0)""",
+                (AsIs(team_id),)
+            )
+        except psycopg2.ProgrammingError:
+            pass
+        try:
+            cur.execute(
+                """INSERT INTO dbo.teams (team_id)
+                VALUES (%s)""",
+                (team_id,)
+            )
+        except psycopg2.ProgrammingError:
+            pass
     conn.commit()
     user_ids = []
     slack_client = SlackClient(api_token)
