@@ -17,6 +17,7 @@ def parse_add_points(text: str) -> Tuple[str, int, str]:
     reason = ' '.join(pointreason[1:].split(' ')[1:])
     identity = ltidentity[1:]
     user_id, display_name = identity.split('|')  # TODO ????
+    user_id = user_id.lower()
     return user_id, points, reason
 
 

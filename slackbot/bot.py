@@ -24,14 +24,14 @@ MAX_SCORE_ADD = 20
 @app.route('/add-points', methods=['POST'])
 def add_points():
     if request.form.get('token') != verify_token:
-        return
+        return  # TODO
     logger.debug(f"Add points request: {request.form}")
     text = request.form.get('text', '')
     try:
         subject_id, points, reason = parse_add_points(text)
     except AddPointsError:
         return "Sorry, I don't understand that!"
-    if subject_id == request.form.get(''):  # TODO
+    if subject_id == request.form.get('').lower():  # TODO
         return "Cheeky, you can't give yourself points!"
     if abs(points) > MAX_SCORE_ADD:
         return f"Your team only allows adding {MAX_SCORE_ADD} points at once"
