@@ -1,14 +1,14 @@
 import logging
 import os
-import psycopg2
 import re
-
-from urllib import parse
-from werkzeug.datastructures import ImmutableMultiDict
 from typing import Tuple, Dict
+from urllib import parse
 
-from slackbot.database import check_score, check_all_scores, update_database, setup_team
-from slackbot.exceptions import AddPointsError, GetScoreError, UserNotFound
+import psycopg2
+from werkzeug.datastructures import ImmutableMultiDict
+
+from database.user import check_score, update_score
+from slackbot.exceptions import AddPointsError, UserNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
         except UserNotFound:
             return "User not found"
         new_score = current_score + points
-        update_database(conn, team_id, subject_id, new_score)
+        update_score(conn, team_id, subject_id, new_score)
         response = {
             "response_type": "in_channel",  # TODO
             "text": "test"

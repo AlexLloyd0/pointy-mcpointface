@@ -1,37 +1,11 @@
-from typing import List, Tuple
 import os
-
-from urllib import parse
 import psycopg2
+
+from typing import List, Tuple
 from psycopg2.extensions import AsIs
 from slackclient import SlackClient
 
-from slackbot.exceptions import UserNotFound
-
 api_token = os.environ.get('POINTY_APP_TOKEN')
-url = parse.urlparse(os.environ["DATABASE_URL"])
-
-
-def check_score(conn, team_id: str, user_id: str, retry: bool = True) -> int:
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
-                """SELECT score FROM points.%s WHERE user_id = %s""",
-                (AsIs(team_id), user_id)
-            )
-            resp = cur.fetchone()
-            if not resp:
-                raise UserNotFound
-            score = resp[0]
-        except psycopg2.ProgrammingError:
-            conn.rollback()
-            setup_team(conn, team_id)
-            if retry:
-                return check_score(conn, team_id, user_id, False)
-            else:
-                raise
-    conn.commit()
-    return score
 
 
 def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, int]]:
@@ -52,25 +26,6 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
                 raise
     conn.commit()
     return scoreboard
-
-
-def update_database(conn, team_id: str, user_id: str, new_score: int, retry: bool = True) -> bool:
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
-                """UPDATE points.%s
-                SET score = %s
-                WHERE user_id = %s""",
-                (AsIs(team_id), new_score, user_id)
-            )
-        except psycopg2.ProgrammingError:
-            conn.rollback()
-            setup_team(conn, team_id)
-            if retry:
-                return update_database(conn, team_id, user_id, new_score, False)
-            else:
-                raise
-    conn.commit()  # TODO: return something
 
 
 def setup_team(conn, team_id: str):
@@ -129,12 +84,4 @@ def remove_team(conn, team_id: str):
             )
         except psycopg2.ProgrammingError:
             conn.rollback()
-    conn.commit()
-
-
-def setup_db(conn):
-    with conn.cursor() as cur:
-        cur.execute("""CREATE SCHEMA points""")
-        cur.execute("""CREATE SCHEMA dbo""")
-        cur.execute("""CREATE TABLE dbo.teams (team_id TEXT PRIMARY KEY)""")
     conn.commit()
