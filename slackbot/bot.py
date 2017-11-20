@@ -5,7 +5,7 @@ from urllib import parse
 import psycopg2
 from flask import Flask, request
 
-from slackbot.app_logic import parse_add_points, parse_get_score
+from slackbot.add_points import add_points
 from slackbot.database import check_score, check_all_scores, update_database, setup_team
 from slackbot.exceptions import AddPointsError, GetScoreError, UserNotFound
 
@@ -22,60 +22,26 @@ MAX_SCORE_ADD = 20
 
 
 @app.route('/add-points', methods=['POST'])
-def add_points():
-    logger.error('Form')
-    logger.error(request.form)
-    logger.error('Args')
-    logger.error(request.args)
-    logger.error('Headers')
-    logger.error(request.headers)
-    logger.error('Data')
-    logger.error(request.data)
-    if request.form.get('token') != verify_token:
+def add_points_route():
+    form = request.form
+    if form.get('token') != verify_token or form.get('command') != '/points':
         return  # TODO
-    logger.debug(f"Add points request: {request.form}")
-    text = request.form.get('text', '')
-    try:
-        subject_id, points, reason = parse_add_points(text)
-    except AddPointsError:
-        return "Sorry, I don't understand that!"
-    pointer = request.form.get('')  # TODO
-    if pointer and subject_id == pointer.lower():
-        return "Cheeky, you can't give yourself points!"
-    if abs(points) > MAX_SCORE_ADD:
-        return f"Your team only allows adding {MAX_SCORE_ADD} points at once"
-    team_id = request.form.get('team_id', '')
-    with psycopg2.connect(database=url.path[1:],
-                          user=url.username,
-                          password=url.password,
-                          host=url.hostname,
-                          port=url.port) as conn:
-        try:
-            current_score = check_score(conn, team_id, subject_id)
-        except UserNotFound:
-            return "User not found"
-        new_score = current_score + points
-        update_database(conn, team_id, subject_id, new_score)
-        response = {
-            "response_type": "in_channel",  # TODO
-            "text": "test"
-        }
+    add_points(form)
 
-        logger.debug(f"Response: {response}")
-        return response
 
 
 @app.route('/get-score', methods=['POST'])
-def get_score():
-    if request.form.get('token') != verify_token:
+def get_score_route():
+    form = request.form
+    if form.get('token') != verify_token or form.get('command') != '/points':  # TODO
         return
-    logger.debug(f"Get score request: {request.form}")
-    text = request.form.get('text', '')
+    logger.debug(f"Get score request: {form}")
+    text = form.get('text', '')
     try:
         subject_id = parse_get_score(text)
     except GetScoreError:
         return 'some kind of failure message'  # TODO
-    team_id = request.form.get('team_id', '')
+    team_id = form.get('team_id', '')
     with psycopg2.connect(database=url.path[1:],
                           user=url.username,
                           password=url.password,
@@ -95,11 +61,12 @@ def get_score():
 
 
 @app.route('/get-scoreboard', methods=['POST'])
-def get_scoreboard():
-    if request.form.get('token') != verify_token:
+def get_scoreboard_route():
+    form = request.form
+    if form.get('token') != verify_token or form.get('command') != '/points':  # TODO
         return
-    logger.debug(f"Scoreboard request: {request.form}")
-    team_id = request.form.get('team_id', '')
+    logger.debug(f"Scoreboard request: {form}")
+    team_id = form.get('team_id', '')
     with psycopg2.connect(database=url.path[1:],
                           user=url.username,
                           password=url.password,
@@ -116,10 +83,11 @@ def get_scoreboard():
 
 
 @app.route('/add-team', methods=['POST'])
-def add_team():
-    if request.form.get('token') != verify_token:
+def add_team_route():
+    form = request.form
+    if form.get('token') != verify_token or form.get('command') != '/points':  # TODO
         return
-    logger.debug(f"Add team request: {request.form}")
+    logger.debug(f"Add team request: {form}")
     # TODO: get team id
     team_id = ''
     with psycopg2.connect(database=url.path[1:],

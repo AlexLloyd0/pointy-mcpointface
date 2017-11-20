@@ -12,6 +12,7 @@ flask = "*"
 gunicorn = "*"
 pyyaml = "*"
 "psycopg2" = "*"
+werkzeug = "*"
 
 
 [dev-packages]
