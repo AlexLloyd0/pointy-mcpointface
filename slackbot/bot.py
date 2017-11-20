@@ -27,7 +27,7 @@ def add_points_route():
     form = request.form
     if form.get('token') != verify_token or form.get('command') != '/points':
         return  # TODO
-    add_points(form)
+    return add_points(form)
 
 
 @app.route('/get-score', methods=['POST'])
@@ -35,6 +35,7 @@ def get_score_route():
     form = request.form
     if form.get('token') != verify_token or form.get('command') != '/points':  # TODO
         return
+    return get_score(form)
 
 
 @app.route('/get-scoreboard', methods=['POST'])
@@ -42,6 +43,7 @@ def get_scoreboard_route():
     form = request.form
     if form.get('token') != verify_token or form.get('command') != '/points':  # TODO
         return
+    return get_scoreboard(form)
 
 
 @app.route('/add-team', methods=['POST'])
@@ -49,6 +51,7 @@ def add_team_route():
     form = request.form
     if form.get('token') != verify_token or form.get('command') != '/points':  # TODO
         return
+    return add_team(form)
 
 
 def main():

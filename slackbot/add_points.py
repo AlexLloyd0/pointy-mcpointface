@@ -1,20 +1,14 @@
 import logging
-import os
 import re
 from typing import Tuple, Dict
-from urllib import parse
 
-import psycopg2
 from werkzeug.datastructures import ImmutableMultiDict
 
 from database.user import check_score, update_score
+from database.main import connect
 from slackbot.exceptions import AddPointsError, UserNotFound
 
 logger = logging.getLogger(__name__)
-
-parse.uses_netloc.append("postgres")
-url = parse.urlparse(os.environ["DATABASE_URL"])
-verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 
 MAX_SCORE_ADD = 20
 
@@ -29,16 +23,12 @@ def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
     except AddPointsError:
         return "Sorry, I don't understand that!"
     pointer = form.get('')  # TODO
-    if pointer and subject_id == pointer.lower():
+    if pointer and subject_id == pointer:
         return "Cheeky, you can't give yourself points!"
     if abs(points) > MAX_SCORE_ADD:
         return f"Your team only allows adding {MAX_SCORE_ADD} points at once"
     team_id = form.get('team_id', '')
-    with psycopg2.connect(database=url.path[1:],
-                          user=url.username,
-                          password=url.password,
-                          host=url.hostname,
-                          port=url.port) as conn:
+    with connect() as conn:
         try:
             current_score = check_score(conn, team_id, subject_id)
         except UserNotFound:
@@ -47,7 +37,7 @@ def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
         update_score(conn, team_id, subject_id, new_score)
         response = {
             "response_type": "in_channel",  # TODO
-            "text": "test"
+            "text": f"<@{subject_id}> is on {new_score} points."
         }
 
         logger.debug(f"Response: {response}")
@@ -57,10 +47,10 @@ def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
 def parse_add_points(text: str) -> Tuple[str, int, str]:
     if not add_points_re.match(text):
         raise AddPointsError(text)
-    ltidentity = text.split('>')[0]
+    ltatidentity = text.split('>')[0]
     pointreason = '>'.join(text.split('>')[1:])
     points = int(pointreason[1:].split(' ')[0])
     reason = ' '.join(pointreason[1:].split(' ')[1:])
-    identity = ltidentity[1:]
+    identity = ltatidentity[2:]
     user_id, display_name = identity.split('|')  # TODO do something with display name?
     return user_id, points, reason
