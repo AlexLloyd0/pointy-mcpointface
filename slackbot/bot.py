@@ -1,8 +1,6 @@
 import logging
 import os
-from urllib import parse
 
-import psycopg2
 from flask import Flask, request
 
 from slackbot.add_points import add_points
@@ -14,12 +12,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-parse.uses_netloc.append("postgres")
-url = parse.urlparse(os.environ["DATABASE_URL"])
 verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
-
-
-MAX_SCORE_ADD = 20
 
 
 @app.route('/add-points', methods=['POST'])

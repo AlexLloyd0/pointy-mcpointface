@@ -1,1 +1,1 @@
-app: gunicorn slackbot.bot:app --log-file -
+web: gunicorn slackbot.bot:app --log-file -
