@@ -23,6 +23,14 @@ MAX_SCORE_ADD = 20
 
 @app.route('/add-points', methods=['POST'])
 def add_points():
+    logger.error('Form')
+    logger.error(request.form)
+    logger.error('Args')
+    logger.error(request.args)
+    logger.error('Headers')
+    logger.error(request.headers)
+    logger.error('Data')
+    logger.error(request.data)
     if request.form.get('token') != verify_token:
         return  # TODO
     logger.debug(f"Add points request: {request.form}")
