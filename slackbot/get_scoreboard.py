@@ -20,7 +20,7 @@ def get_scoreboard(form: ImmutableMultiDict) -> Dict[str, str]:
 def _parse_scoreboard(scoreboard_list: List[Tuple[str, int]]) -> str:
     text = f'Here\'s a list of my favourite people:'
     for index, (subject, score) in enumerate(scoreboard_list):
-        text += f'\n{index+1}. {subject} [{score} point{"s" if score != 1 else ""}]'
+        text += f'\n{index+1}. <@{subject}> [{score} point{"s" if score != 1 else ""}]'
         if index == 0:
             text += ' :crown:'
         elif index + 1 == len(scoreboard_list):
