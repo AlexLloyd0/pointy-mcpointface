@@ -21,18 +21,18 @@ def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
     try:
         subject_id, points, reason = parse_add_points(text)
     except AddPointsError:
-        return "Sorry, I don't understand that!"
+        return {'text': "Sorry, I don't understand that!"}
     pointer = form.get('')  # TODO
     if pointer and subject_id == pointer:
-        return "Cheeky, you can't give yourself points!"
+        return {'text': "Cheeky, you can't give yourself points!"}
     if abs(points) > MAX_SCORE_ADD:
-        return f"Your team only allows adding {MAX_SCORE_ADD} points at once"
+        return {'text': f"Your team only allows adding {MAX_SCORE_ADD} points at once"}
     team_id = form.get('team_id', '')
     with connect() as conn:
         try:
             current_score = check_score(conn, team_id, subject_id)
         except UserNotFound:
-            return "User not found"
+            return {'text': "User not found"}
         new_score = current_score + points
         update_score(conn, team_id, subject_id, new_score)
         response = {

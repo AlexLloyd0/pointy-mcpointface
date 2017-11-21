@@ -1,7 +1,7 @@
 import logging
 import os
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 from slackbot.add_points import add_points
 from slackbot.get_score import get_score
@@ -20,7 +20,7 @@ def add_points_route():
     form = request.form
     if form.get('token') != verify_token or form.get('command') != '/points':
         return  # TODO
-    return add_points(form)
+    return jsonify(add_points(form))
 
 
 @app.route('/get-score', methods=['POST'])
