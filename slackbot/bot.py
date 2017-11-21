@@ -26,7 +26,7 @@ def add_points_route():
 @app.route('/get-score', methods=['POST'])
 def get_score_route():
     form = request.form
-    if form.get('token') != verify_token or form.get('command') != '/get-score':
+    if form.get('token') != verify_token or form.get('command') != '/score':
         return "Invalid command"
     return jsonify(get_score(form))
 
@@ -34,7 +34,7 @@ def get_score_route():
 @app.route('/get-scoreboard', methods=['POST'])
 def get_scoreboard_route():
     form = request.form
-    if form.get('token') != verify_token or form.get('command') != '/get-scoreboard':
+    if form.get('token') != verify_token or form.get('command') != '/leaderboard':
         return "Invalid command"
     return jsonify(get_scoreboard(form))
 
