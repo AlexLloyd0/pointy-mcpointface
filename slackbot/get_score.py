@@ -32,5 +32,5 @@ def get_score(form: ImmutableMultiDict) -> Dict[str, str]:
 def parse_get_score(text: str) -> str:
     if not check_score_re.match(text):
         raise GetScoreError(text)
-    user_id, display_name = text[1:-1].split('|')
+    user_id, display_name = text.strip()[2:-1].split('|')
     return user_id
