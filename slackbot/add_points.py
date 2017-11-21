@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 MAX_SCORE_ADD = 20
 
-add_points_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> [0-9]+( .*)?$")
+add_points_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> -?[0-9]+( .*)?$")
 
 
 def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
