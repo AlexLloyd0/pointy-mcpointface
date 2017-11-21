@@ -4,8 +4,8 @@ from typing import Tuple, Dict
 
 from werkzeug.datastructures import ImmutableMultiDict
 
+from database.main import connect, ephemeral_resp, channel_resp
 from database.user import check_score, update_score
-from database.main import connect
 from slackbot.exceptions import AddPointsError, UserNotFound
 
 logger = logging.getLogger(__name__)
@@ -21,27 +21,21 @@ def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
     try:
         subject_id, points, reason = parse_add_points(text)
     except AddPointsError:
-        return {'text': "Sorry, I don't understand that!"}
-    pointer = form.get('')  # TODO
+        return ephemeral_resp("Sorry, I don't understand that!")
+    pointer = form.get('user_id')
     if pointer and subject_id == pointer:
-        return {'text': "Cheeky, you can't give yourself points!"}
+        return ephemeral_resp("Cheeky, you can't give yourself points!")
     if abs(points) > MAX_SCORE_ADD:
-        return {'text': f"Your team only allows adding {MAX_SCORE_ADD} points at once"}
+        return ephemeral_resp(f"Your team only allows adding {MAX_SCORE_ADD} points at once")
     team_id = form.get('team_id', '')
     with connect() as conn:
         try:
             current_score = check_score(conn, team_id, subject_id)
         except UserNotFound:
-            return {'text': "User not found"}
+            return ephemeral_resp("User not found.")
         new_score = current_score + points
         update_score(conn, team_id, subject_id, new_score)
-        response = {
-            "response_type": "in_channel",  # TODO
-            "text": f"<@{subject_id}> is on {new_score} points."
-        }
-
-        logger.debug(f"Response: {response}")
-        return response
+        return channel_resp(f"<@{subject_id}>: {current_score} -> {new_score} {reason}")
 
 
 def parse_add_points(text: str) -> Tuple[str, int, str]:
@@ -52,5 +46,5 @@ def parse_add_points(text: str) -> Tuple[str, int, str]:
     points = int(pointreason[1:].split(' ')[0])
     reason = ' '.join(pointreason[1:].split(' ')[1:])
     identity = ltatidentity[2:]
-    user_id, display_name = identity.split('|')  # TODO do something with display name?
+    user_id, display_name = identity.split('|')
     return user_id, points, reason

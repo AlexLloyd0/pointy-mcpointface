@@ -1,10 +1,14 @@
+import logging
 import os
-import psycopg2
-
+from typing import Dict
 from urllib import parse
+
+import psycopg2
 
 parse.uses_netloc.append("postgres")
 url = parse.urlparse(os.environ["DATABASE_URL"])
+
+logger = logging.getLogger(__name__)
 
 
 def setup_db(conn):
@@ -21,3 +25,19 @@ def connect():
                             password=url.password,
                             host=url.hostname,
                             port=url.port)
+
+
+def ephemeral_resp(text: str) -> Dict[str, str]:
+    logger.debug(f"Ephemeral response: {text}")
+    return {
+        "response_type": "ephemeral",
+        "text": text
+    }
+
+
+def channel_resp(text: str) -> Dict[str, str]:
+    logger.debug(f"Channel response: {text}")
+    return {
+        "response_type": "in_channel",
+        "text": text
+    }
