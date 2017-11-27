@@ -18,7 +18,9 @@ verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 @app.route('/add-points', methods=['POST'])
 def add_points_route():
     form = request.form
-    if form.get('token') != verify_token or form.get('command') != '/points':
+    if form.get('token') != verify_token:
+        return "Incorrect verification token"
+    if form.get('command') != '/points':
         return "Invalid command"
     return jsonify(add_points(form))
 
@@ -26,7 +28,9 @@ def add_points_route():
 @app.route('/get-score', methods=['POST'])
 def get_score_route():
     form = request.form
-    if form.get('token') != verify_token or form.get('command') != '/score':
+    if form.get('token') != verify_token:
+        return "Incorrect verification token"
+    if form.get('command') != '/score':
         return "Invalid command"
     return jsonify(get_score(form))
 
@@ -34,7 +38,9 @@ def get_score_route():
 @app.route('/get-scoreboard', methods=['POST'])
 def get_scoreboard_route():
     form = request.form
-    if form.get('token') != verify_token or form.get('command') != '/leaderboard':
+    if form.get('token') != verify_token:
+        return "Incorrect verification token"
+    if form.get('command') != '/leaderboard':
         return "Invalid command"
     return jsonify(get_scoreboard(form))
 
@@ -43,16 +49,17 @@ def get_scoreboard_route():
 def add_team_route():
     form = request.form
     if form.get('token') != verify_token:
-        return "Invalid command"
+        return "Incorrect verification token"
     return jsonify(add_team(form))
 
 
 @app.route('/action-endpoint', methods=['POST'])
 def action_route():
     form = request.form
-    if form.get('token') != verify_token:
-        return "Invalid command"
-
+    json = request.get_json(silent=True)
+    if request.get('token') != verify_token and json.get('token') != verify_token:
+        return "Incorrect verification token"
+    # Parse form here
     if form.get('type') == 'url_verification':
         return form.get('challenge')
 
