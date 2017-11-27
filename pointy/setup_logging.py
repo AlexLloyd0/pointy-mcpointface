@@ -4,15 +4,15 @@ import os
 import yaml
 
 file_handler = {"infofilehandler":
-    {
-        "class": "logging.handlers.RotatingFileHandler",
-        "level": "DEBUG",
-        "formatter": "screen",
-        "filename": "logs // info.log",
-        "maxBytes": 10485760,  # 10MB
-        "backupCount": 20,
-        "encoding": "utf8"
-    }}
+                {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "DEBUG",
+                    "formatter": "screen",
+                    "filename": "logs // info.log",
+                    "maxBytes": 10485760,  # 10MB
+                    "backupCount": 20,
+                    "encoding": "utf8"
+                }}
 
 
 def setup_logging():
