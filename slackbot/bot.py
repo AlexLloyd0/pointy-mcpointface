@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify
 
 from slackbot.add_points import add_points
 from slackbot.add_team import add_team
+from slackbot.add_user import add_user
 from slackbot.get_score import get_score
 from slackbot.get_scoreboard import get_scoreboard
 
@@ -57,11 +58,12 @@ def add_team_route():
 def action_route():
     form = request.form
     json = request.get_json(silent=True)
-    if request.get('token') != verify_token and json.get('token') != verify_token:
+    if form.get('token') != verify_token and json.get('token') != verify_token:
         return "Incorrect verification token"
-    # Parse form here
-    if form.get('type') == 'url_verification':
-        return form.get('challenge')
+    if form.get('type') == 'team_join':
+        return jsonify(add_user(form))
+    if json.get('type') == 'url_verification':
+        return json.get('challenge')
 
 
 def main():
