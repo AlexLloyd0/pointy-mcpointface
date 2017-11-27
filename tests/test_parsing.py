@@ -1,4 +1,4 @@
-from slackbot.app_logic import parse_add_points, parse_get_score
+from pointy.api.add_points import parse_add_points
 
 # TODO hypothesis testing?
 valid_add_points = '<@U1234|Alex Lloyd> 10'  # TODO how to run test on list of input: expected response

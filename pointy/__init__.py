@@ -3,12 +3,14 @@ import os
 
 from flask import Flask, request, jsonify
 
-from slackbot.add_points import add_points
-from slackbot.add_team import add_team
-from slackbot.add_user import add_user
-from slackbot.get_score import get_score
-from slackbot.get_scoreboard import get_scoreboard
+from pointy.api.add_points import add_points
+from pointy.api.add_team import add_team
+from pointy.api.add_user import add_user
+from pointy.api.get_score import get_score
+from pointy.api.get_scoreboard import get_scoreboard
+from pointy.setup_logging import setup_logging
 
+setup_logging()
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -67,4 +69,4 @@ def action_route():
 
 
 def main():
-    app.run(host='0.0.0.0')
+    app.run()

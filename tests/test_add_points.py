@@ -1,4 +1,3 @@
-from slackbot.add_points import parse_add_points
 from werkzeug.datastructures import ImmutableMultiDict
 
 valid = ImmutableMultiDict([('token', 'rYI1FoMqUAysp62UPsv7Y8ph'),

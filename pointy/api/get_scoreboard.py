@@ -3,8 +3,8 @@ from typing import Dict, List, Tuple
 
 from werkzeug.datastructures import ImmutableMultiDict
 
-from database.main import connect, channel_resp, ephemeral_resp
-from database.team import check_all_scores
+from pointy.database.common import connect, channel_resp, ephemeral_resp
+from pointy.database.team import check_all_scores
 
 logger = logging.getLogger(__name__)
 

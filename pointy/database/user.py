@@ -1,6 +1,6 @@
 from psycopg2.extensions import AsIs
 
-from slackbot.exceptions import UserNotFound
+from pointy.exceptions import UserNotFound
 
 
 def check_score(conn, team_id: str, user_id: str) -> int:
@@ -14,6 +14,7 @@ def check_score(conn, team_id: str, user_id: str) -> int:
             raise UserNotFound
         score = resp[0]
     conn.commit()
+    # noinspection PyUnboundLocalVariable
     return score
 
 
@@ -28,10 +29,10 @@ def update_score(conn, team_id: str, user_id: str, new_score: int):
     conn.commit()  # TODO: return something
 
 
-def add_user(conn, team_id: str, user_id: str, initial_score: int = 0):
+def insert_user(conn, team_id: str, user_id: str, initial_score: int = 0):
     with conn.cursor() as cur:
         cur.execute(
-            """INSERT INTO points.%s (user_id, initial_score)
+            """INSERT INTO points.%s (user_id, score)
             VALUES (%s, %s)""",
             (AsIs(team_id), user_id, initial_score)
         )

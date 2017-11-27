@@ -4,9 +4,9 @@ from typing import Dict
 
 from werkzeug.datastructures import ImmutableMultiDict
 
-from database.main import connect, ephemeral_resp, channel_resp
-from database.user import check_score
-from slackbot.exceptions import GetScoreError, UserNotFound
+from pointy.database.common import connect, ephemeral_resp, channel_resp
+from pointy.database.user import check_score
+from pointy.exceptions import GetScoreError, UserNotFound
 
 logger = logging.getLogger(__name__)
 
