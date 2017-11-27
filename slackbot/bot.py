@@ -47,5 +47,15 @@ def add_team_route():
     return jsonify(add_team(form))
 
 
+@app.route('/action-endpoint', methods=['POST'])
+def action_route():
+    form = request.form
+    if form.get('token') != verify_token:
+        return "Invalid command"
+
+    if form.get('type') == 'url_verification':
+        return form.get('challenge')
+
+
 def main():
     app.run(host='0.0.0.0')

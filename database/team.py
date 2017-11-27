@@ -1,7 +1,7 @@
 import os
-import psycopg2
-
 from typing import List, Tuple
+
+import psycopg2
 from psycopg2.extensions import AsIs
 from slackclient import SlackClient
 
@@ -28,7 +28,7 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
     return scoreboard
 
 
-def setup_team(conn, team_id: str):
+def setup_team(conn, team_id: str):  # TODO trigger on new team
     with conn.cursor() as cur:
         try:
             cur.execute(

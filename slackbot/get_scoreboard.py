@@ -3,18 +3,19 @@ from typing import Dict, List, Tuple
 
 from werkzeug.datastructures import ImmutableMultiDict
 
-from database.main import connect, channel_resp
+from database.main import connect, channel_resp, ephemeral_resp
 from database.team import check_all_scores
 
 logger = logging.getLogger(__name__)
 
 
-def get_scoreboard(form: ImmutableMultiDict) -> Dict[str, str]:
+def get_scoreboard(form: ImmutableMultiDict, ephemeral: bool = True) -> Dict[str, str]:
     logger.debug(f"Scoreboard request: {form}")
     team_id = form.get('team_id', '')
     with connect() as conn:
         scoreboard_list = check_all_scores(conn, team_id)
-    return channel_resp(_parse_scoreboard(scoreboard_list))
+    text = _parse_scoreboard(scoreboard_list)
+    return ephemeral_resp(text) if ephemeral else channel_resp(text)  # TODO paginate
 
 
 def _parse_scoreboard(scoreboard_list: List[Tuple[str, int]]) -> str:
