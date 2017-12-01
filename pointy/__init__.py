@@ -65,7 +65,7 @@ def action_route():
     if form.get('type') == 'team_join':
         return jsonify(add_user(form))
     if form.get('type') == 'app_uninstalled':
-        raise NotImplemented('Uninstalled  app')  # TODO
+        raise NotImplemented('Uninstalled app')  # TODO
     if json.get('type') == 'url_verification':
         return json.get('challenge')
 

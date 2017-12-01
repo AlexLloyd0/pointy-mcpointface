@@ -26,7 +26,7 @@ def get_score(form: ImmutableMultiDict) -> Dict[str, str]:
             score = check_score(conn, team_id, subject_id)
         except UserNotFound:
             return ephemeral_resp(f"User not found")  # TODO add them if they're a user?
-        return channel_resp(f"{text.strip()} has {score} points")
+        return channel_resp(f"{text.strip()} has {score} point{'s' if score != 1 else ''}")
 
 
 def parse_get_score(text: str) -> str:
