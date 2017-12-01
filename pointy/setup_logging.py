@@ -12,7 +12,7 @@ config = {'disable_existing_loggers': False,
                                "class": "logging.handlers.RotatingFileHandler",
                                "level": "DEBUG",
                                "formatter": "screen",
-                               "filename": "logs // info.log",
+                               "filename": "logs//info.log",
                                "maxBytes": 10485760,  # 10MB
                                "backupCount": 20,
                                "encoding": "utf8"
