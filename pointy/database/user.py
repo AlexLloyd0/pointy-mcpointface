@@ -26,7 +26,7 @@ def update_score(conn, team_id: str, user_id: str, new_score: int):
             WHERE user_id = %s""",
             (AsIs(team_id), new_score, user_id)
         )
-    conn.commit()  # TODO: return something
+    conn.commit()
 
 
 def insert_user(conn, team_id: str, user_id: str, initial_score: int = 0):
@@ -36,4 +36,4 @@ def insert_user(conn, team_id: str, user_id: str, initial_score: int = 0):
             VALUES (%s, %s)""",
             (AsIs(team_id), user_id, initial_score)
         )
-    conn.commit()  # TODO: return something
+    conn.commit()

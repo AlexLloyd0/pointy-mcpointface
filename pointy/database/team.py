@@ -64,7 +64,6 @@ def setup_team(conn, team_id: str):  # TODO trigger on new team
             b"""INSERT INTO points.%s (user_id, score)
             VALUES """ + args_str, (AsIs(team_id),)
         )
-    # TODO set up event listener for all new users to add, and all removed users to delete
 
 
 def remove_team(conn, team_id: str):
