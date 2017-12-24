@@ -28,7 +28,7 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
     return scoreboard
 
 
-def setup_team(conn, team_id: str):  # TODO trigger on new team
+def setup_team(conn, team_id: str):  # TODO trigger on new team addition
     with conn.cursor() as cur:
         try:
             cur.execute(
