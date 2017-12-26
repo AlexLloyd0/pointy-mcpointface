@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Dict
+from typing import Dict, List
 from urllib import parse
 
 import psycopg2
@@ -27,17 +27,23 @@ def connect():
                             port=url.port)
 
 
-def ephemeral_resp(text: str) -> Dict[str, str]:
-    logger.debug(f"Ephemeral response: {text}")
-    return {
+def ephemeral_resp(text: str, attachments: List[Dict] = []) -> Dict[str, str]:
+    logger.debug(f"Ephemeral response{' (with attachments)' if attachments else ''}: {text}")
+    resp = {
         "response_type": "ephemeral",
         "text": text
     }
+    if attachments:
+        resp["attachments"] = attachments
+    return resp
 
 
-def channel_resp(text: str) -> Dict[str, str]:
-    logger.debug(f"Channel response: {text}")
-    return {
+def channel_resp(text: str, attachments: List[Dict] = []) -> Dict[str, str]:
+    logger.debug(f"Channel response{' (with attachments)' if attachments else ''}: {text}")
+    resp = {
         "response_type": "in_channel",
         "text": text
     }
+    if attachments:
+        resp["attachments"] = attachments
+    return resp

@@ -28,6 +28,28 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
     return scoreboard
 
 
+def check_scores(conn, team_id: str, offset: int, limit: int = 10, retry: bool = True) -> List[Tuple[str, int]]:
+    with conn.cursor() as cur:
+        try:
+            cur.execute(
+                """SELECT * FROM points.%s
+                ORDER BY score DESC
+                LIMIT %s
+                OFFSET %s""",
+                (AsIs(team_id), str(limit), str(offset))
+            )
+            scoreboard = cur.fetchall()
+        except psycopg2.ProgrammingError:
+            conn.rollback()
+            setup_team(conn, team_id)
+            if retry:
+                return check_all_scores(conn, team_id, False)
+            else:
+                raise
+    conn.commit()
+    return scoreboard
+
+
 def setup_team(conn, team_id: str):  # TODO trigger on new team addition
     with conn.cursor() as cur:
         try:
