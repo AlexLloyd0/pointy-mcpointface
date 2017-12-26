@@ -50,7 +50,7 @@ def check_scores(conn, team_id: str, offset: int, limit: int = 10, retry: bool =
     return scoreboard
 
 
-def setup_team(conn, team_id: str):  # TODO trigger on new team addition
+def setup_team(conn, team_id: str):
     with conn.cursor() as cur:
         try:
             cur.execute(

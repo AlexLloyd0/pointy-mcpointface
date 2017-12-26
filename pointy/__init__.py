@@ -82,9 +82,15 @@ def interactive_route():
     if form.get('token') != verify_token:
         return "Incorrect verification token", 403
     if form.get('callback_id') == 'leader_scroll':
-        return jsonify(get_scoreboard_page(form))  # TODO
+        return jsonify(get_scoreboard_page(form))
     logger.info(str(form))
+
+
+@app.route('/oauth-redirect', methods=[''])
+def oauth_redirect():
+    pass
 
 
 def main():
     app.run()
+    #  TODO https://blog.heroku.com/how-to-deploy-your-slack-bots-to-heroku#share-your-bot-with-the-heroku-button
