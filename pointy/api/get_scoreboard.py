@@ -69,7 +69,6 @@ def create_attachments(first: bool, last: bool, offset: int, limit: int):
         "text": "",
         "fallback": "",
         "callback_id": "leader_scroll",
-        "color": "#3AA3E3",
         "attachment_type": "default",
         "actions": actions
     }]

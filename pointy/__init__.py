@@ -86,6 +86,5 @@ def interactive_route():
     logger.info(str(form))
 
 
-
 def main():
     app.run()
