@@ -27,7 +27,9 @@ def connect():
                             port=url.port)
 
 
-def ephemeral_resp(text: str, attachments: List[Dict] = []) -> Dict[str, str]:
+def ephemeral_resp(text: str, attachments: List[Dict] = None) -> Dict[str, str]:
+    if not attachments:
+        attachments = []
     logger.debug(f"Ephemeral response{' (with attachments)' if attachments else ''}: {text}")
     resp = {
         "response_type": "ephemeral",
@@ -38,7 +40,9 @@ def ephemeral_resp(text: str, attachments: List[Dict] = []) -> Dict[str, str]:
     return resp
 
 
-def channel_resp(text: str, attachments: List[Dict] = []) -> Dict[str, str]:
+def channel_resp(text: str, attachments: List[Dict] = None) -> Dict[str, str]:
+    if not attachments:
+        attachments = []
     logger.debug(f"Channel response{' (with attachments)' if attachments else ''}: {text}")
     resp = {
         "response_type": "in_channel",

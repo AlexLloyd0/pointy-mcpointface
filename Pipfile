@@ -5,6 +5,11 @@ verify_ssl = true
 name = "pypi"
 
 
+[requires]
+
+python_version = '3.6'
+
+
 [packages]
 
 slackclient = "*"
@@ -12,10 +17,13 @@ flask = "*"
 gunicorn = "*"
 pyyaml = "*"
 "psycopg2" = "*"
-werkzeug = "*"
+werkzeug = "==0.12"
+zappa = "*"
+python-dotenv = "*"
 
 
 [dev-packages]
 
 pycodestyle = "*"
 mypy = "*"
+awscli = "*"
