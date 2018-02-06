@@ -13,13 +13,13 @@ python_version = '3.6'
 [packages]
 
 slackclient = "*"
-flask = "*"
+Flask = "*"
 gunicorn = "*"
-pyyaml = "*"
-"psycopg2" = "*"
-werkzeug = "==0.12"
+PyYAML = "*"
+Werkzeug = "==0.12"
 zappa = "*"
 python-dotenv = "*"
+PyMySQL = "*"
 
 
 [dev-packages]

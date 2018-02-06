@@ -1,23 +1,32 @@
 import os
 from typing import List, Tuple
 
-import psycopg2
-from psycopg2.extensions import AsIs
+import pymysql
+from dotenv import load_dotenv
 from slackclient import SlackClient
+
+from pointy.exceptions import InvalidIdError
+from pointy.utils import validate_id
+
+envfile = '.dev.env' if os.name == 'nt' else '.env'
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", envfile), override=True)
 
 api_token = os.environ.get('POINTY_APP_TOKEN')
 
 
 def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, int]]:
+    if not validate_id(team_id):
+        raise InvalidIdError(f"{team_id} is not a valid team_id")
+
     with conn.cursor() as cur:
         try:
             cur.execute(
-                """SELECT * FROM points.%s
+                f"""SELECT * FROM points.{team_id}
                 ORDER BY score DESC""",
-                (AsIs(team_id),)
+                ()
             )
             scoreboard = cur.fetchall()
-        except psycopg2.ProgrammingError:
+        except pymysql.ProgrammingError:
             conn.rollback()
             setup_team(conn, team_id)
             if retry:
@@ -29,17 +38,20 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
 
 
 def check_scores(conn, team_id: str, offset: int, limit: int = 10, retry: bool = True) -> List[Tuple[str, int]]:
+    if not validate_id(team_id):
+        raise InvalidIdError(f"{team_id} is not a valid team_id")
+
     with conn.cursor() as cur:
         try:
             cur.execute(
-                """SELECT * FROM points.%s
+                f"""SELECT * FROM points.{team_id}
                 ORDER BY score DESC
                 LIMIT %s
                 OFFSET %s""",
-                (AsIs(team_id), str(limit), str(offset))
+                (str(limit), str(offset))
             )
             scoreboard = cur.fetchall()
-        except psycopg2.ProgrammingError:
+        except pymysql.ProgrammingError:
             conn.rollback()
             setup_team(conn, team_id)
             if retry:
@@ -51,15 +63,18 @@ def check_scores(conn, team_id: str, offset: int, limit: int = 10, retry: bool =
 
 
 def setup_team(conn, team_id: str):
+    if not validate_id(team_id):
+        raise InvalidIdError(f"{team_id} is not a valid team_id")
+
     with conn.cursor() as cur:
         try:
             cur.execute(
-                """CREATE TABLE points.%s (
+                f"""CREATE TABLE points.{team_id} (
                 user_id TEXT PRIMARY KEY,
                 score INTEGER NOT NULL DEFAULT 0)""",
-                (AsIs(team_id),)
+                ()
             )
-        except psycopg2.ProgrammingError:
+        except pymysql.ProgrammingError:
             pass
         try:
             cur.execute(
@@ -67,7 +82,7 @@ def setup_team(conn, team_id: str):
                 VALUES (%s)""",
                 (team_id,)
             )
-        except psycopg2.ProgrammingError:
+        except pymysql.ProgrammingError:
             pass
     conn.commit()
     user_ids = []
@@ -81,21 +96,23 @@ def setup_team(conn, team_id: str):
             user_ids.append(user['id'])
 
     with conn.cursor() as cur:
-        args_str = b",".join(cur.mogrify('(%s,0)', (uid,)) for uid in user_ids)
-        cur.execute(
-            b"""INSERT INTO points.%s (user_id, score)
-            VALUES """ + args_str, (AsIs(team_id),)
+        cur.executemany(
+            f"""INSERT INTO points.{team_id} (user_id, score)
+            VALUES (%s, 0)""", (user_ids,)
         )
 
 
 def remove_team(conn, team_id: str):
+    if not validate_id(team_id):
+        raise InvalidIdError(f"{team_id} is not a valid team_id")
+
     with conn.cursor() as cur:
         try:
             cur.execute(
-                """DROP TABLE points.%s""",
-                (AsIs(team_id),)
+                f"""DROP TABLE points.{team_id}""",
+                ()
             )
-        except psycopg2.ProgrammingError:
+        except pymysql.ProgrammingError:
             conn.rollback()
         try:
             cur.execute(
@@ -103,6 +120,6 @@ def remove_team(conn, team_id: str):
                 WHERE team_id = %s""",
                 (team_id,)
             )
-        except psycopg2.ProgrammingError:
+        except pymysql.ProgrammingError:
             conn.rollback()
     conn.commit()

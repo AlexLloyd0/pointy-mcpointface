@@ -1,13 +1,15 @@
-from psycopg2.extensions import AsIs
-
-from pointy.exceptions import UserNotFound
+from pointy.exceptions import UserNotFound, InvalidIdError
+from pointy.utils import validate_id
 
 
 def check_score(conn, team_id: str, user_id: str) -> int:
+    if not validate_id(team_id):
+        raise InvalidIdError(f"{team_id} is not a valid team_id")
+
     with conn.cursor() as cur:
         cur.execute(
-            """SELECT score FROM points.%s WHERE user_id = %s""",
-            (AsIs(team_id), user_id)
+            f"""SELECT score FROM points.{team_id} WHERE user_id = %s""",
+            (user_id,)
         )
         resp = cur.fetchone()
         if not resp:
@@ -19,21 +21,27 @@ def check_score(conn, team_id: str, user_id: str) -> int:
 
 
 def update_score(conn, team_id: str, user_id: str, new_score: int):
+    if not validate_id(team_id):
+        raise InvalidIdError(f"{team_id} is not a valid team_id")
+
     with conn.cursor() as cur:
         cur.execute(
-            """UPDATE points.%s
+            f"""UPDATE points.{team_id}
             SET score = %s
             WHERE user_id = %s""",
-            (AsIs(team_id), new_score, user_id)
+            (new_score, user_id)
         )
     conn.commit()
 
 
 def insert_user(conn, team_id: str, user_id: str, initial_score: int = 0):
+    if not validate_id(team_id):
+        raise InvalidIdError(f"{team_id} is not a valid team_id")
+
     with conn.cursor() as cur:
         cur.execute(
-            """INSERT INTO points.%s (user_id, score)
+            f"""INSERT INTO points.{team_id} (user_id, score)
             VALUES (%s, %s)""",
-            (AsIs(team_id), user_id, initial_score)
+            (user_id, initial_score)
         )
     conn.commit()

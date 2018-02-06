@@ -2,6 +2,7 @@ import json
 import logging
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 
 from pointy.api.add_points import add_points
@@ -9,6 +10,7 @@ from pointy.api.add_team import add_team
 from pointy.api.add_user import add_user
 from pointy.api.get_score import get_score
 from pointy.api.get_scoreboard import get_scoreboard, get_scoreboard_page
+from pointy.database.build import build_db
 from pointy.setup_logging import setup_logging
 
 setup_logging()
@@ -16,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+envfile = '.dev.env' if os.name == 'nt' else '.env'
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", envfile), override=True)
 verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 
 
@@ -91,6 +95,10 @@ def oauth_redirect():
     pass
 
 
+@app.route('/build')
+def build_route():
+    return build_db()
+
+
 def main():
     app.run()
-    #  TODO https://blog.heroku.com/how-to-deploy-your-slack-bots-to-heroku#share-your-bot-with-the-heroku-button

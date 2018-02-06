@@ -3,10 +3,19 @@ import os
 from typing import Dict, List
 from urllib import parse
 
-import psycopg2
+import pymysql
+from dotenv import load_dotenv
+
+envfile = '.dev.env' if os.name == 'nt' else '.env'
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", envfile), override=True)
 
 parse.uses_netloc.append("postgres")
-url = parse.urlparse(os.environ["DATABASE_URL"])
+
+RDS_HOST = os.environ.get("DB_HOST")
+RDS_PORT = int(os.environ.get("DB_PORT", 3306))
+NAME = os.environ.get("DB_USERNAME")
+PASSWORD = os.environ.get("DB_PASSWORD")
+DB_NAME = os.environ.get("DB_NAME")
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +29,13 @@ def setup_db(conn):
 
 
 def connect():
-    return psycopg2.connect(database=url.path[1:],
-                            user=url.username,
-                            password=url.password,
-                            host=url.hostname,
-                            port=url.port)
+    logger.debug(f"Connecting to {RDS_HOST}")
+    return pymysql.connect(host=RDS_HOST,
+                           user=NAME,
+                           passwd=PASSWORD,
+                           port=RDS_PORT,
+                           cursorclass=pymysql.cursors.DictCursor,
+                           )
 
 
 def ephemeral_resp(text: str, attachments: List[Dict] = None) -> Dict[str, str]:

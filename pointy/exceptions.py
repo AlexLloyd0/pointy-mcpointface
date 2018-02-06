@@ -8,3 +8,7 @@ class GetScoreError(SyntaxError):
 
 class UserNotFound(SyntaxError):
     pass
+
+
+class InvalidIdError(SyntaxError):
+    pass
