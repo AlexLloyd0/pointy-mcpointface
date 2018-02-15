@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from contextlib import closing
 from typing import List, Tuple
 
 from dotenv import load_dotenv
@@ -21,10 +22,8 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
 
     try:
         scoreboard = execute_query_fetchall(conn,
-                                            f"""SELECT * FROM points.{team_id}
-                                            ORDER BY score DESC""",
-                                            ()
-                                            )
+                                            f"""SELECT * FROM {team_id}
+                                            ORDER BY score DESC""", ())
     except sqlite3.ProgrammingError:
         conn.rollback()
         setup_team(conn, team_id)
@@ -41,12 +40,11 @@ def check_scores(conn, team_id: str, offset: int, limit: int = 10, retry: bool =
 
     try:
         scoreboard = execute_query_fetchall(conn,
-                                            f"""SELECT * FROM points.{team_id}
+                                            f"""SELECT * FROM {team_id}
                                             ORDER BY score DESC
                                             LIMIT ?
                                             OFFSET ?""",
-                                            (str(limit), str(offset))
-                                            )
+                                            (str(limit), str(offset)))
     except sqlite3.ProgrammingError:
         conn.rollback()
         setup_team(conn, team_id)
@@ -63,16 +61,14 @@ def setup_team(conn, team_id: str):
 
     try:
         execute_query(conn,
-                      f"""CREATE TABLE points.{team_id} (
+                      f"""CREATE TABLE {team_id} (
                       user_id TEXT PRIMARY KEY,
                       score INTEGER NOT NULL DEFAULT 0)""",
-                      ()
-                      )
+                      ())
         execute_query(conn,
-                      """INSERT INTO dbo.teams (team_id)
+                      """INSERT INTO teams (team_id)
                       VALUES (?)""",
-                      (team_id,)
-                      )
+                      (team_id,))
     except sqlite3.ProgrammingError:
         conn.rollback()
         raise
@@ -86,11 +82,10 @@ def setup_team(conn, team_id: str):
         if user['deleted'] is False and user['is_bot'] is False and user['id'] != 'USLACKBOT':
             user_ids.append(user['id'])
 
-    with conn.cursor() as cur:
+    with closing(conn.cursor()) as cur:
         cur.executemany(
-            f"""INSERT INTO points.{team_id} (user_id, score)
-            VALUES (?, 0)""", (user_ids,)
-        )
+            f"""INSERT INTO {team_id} (user_id, score)
+            VALUES (?, 0)""", (user_ids,))
         cur.commit()
 
 
@@ -100,16 +95,12 @@ def remove_team(conn, team_id: str):
 
     try:
         execute_query(conn,
-                      f"""DROP TABLE points.{team_id}""",
-                      ()
-                      )
+                      f"""DROP TABLE {team_id}""", ())
     except sqlite3.ProgrammingError:
         conn.rollback()
     try:
         execute_query(conn,
-                      """DELETE FROM dbo.teams
-                      WHERE team_id = ?""",
-                      (team_id,)
-                      )
+                      """DELETE FROM teams
+                      WHERE team_id = ?""", (team_id,))
     except sqlite3.ProgrammingError:
         conn.rollback()

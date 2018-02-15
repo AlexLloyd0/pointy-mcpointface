@@ -1,6 +1,7 @@
 import logging
 import os
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Dict, List
 
@@ -16,17 +17,19 @@ logger = logging.getLogger(__name__)
 def connect(test=False):
     logger.debug(f"Connecting to SQLite")
     path = DB_LOCATION / 'test.db' if test else DB_LOCATION / 'live.db'
-    return sqlite3.connect(str(path))
+    conn = sqlite3.connect(str(path))
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def execute_query(conn, query, parameters):
-    with conn.cursor() as cur:
+    with closing(conn.cursor()) as cur:
         cur.execute(query, parameters)
     conn.commit()
 
 
 def execute_query_fetchone(conn, query, parameters):
-    with conn.cursor() as cur:
+    with closing(conn.cursor()) as cur:
         cur.execute(query, parameters)
         result = cur.fetchone()
     conn.commit()
@@ -34,7 +37,7 @@ def execute_query_fetchone(conn, query, parameters):
 
 
 def execute_query_fetchall(conn, query, parameters):
-    with conn.cursor() as cur:
+    with closing(conn.cursor()) as cur:
         cur.execute(query, parameters)
         result = cur.fetchall()
     conn.commit()

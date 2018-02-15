@@ -8,7 +8,7 @@ def check_score(conn, team_id: str, user_id: str) -> int:
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
     resp = execute_query_fetchone(conn,
-                                  f"""SELECT score FROM points.{team_id} WHERE user_id = ?""",
+                                  f"""SELECT score FROM {team_id} WHERE user_id = ?""",
                                   (user_id,)
                                   )
     if not resp:
@@ -23,7 +23,7 @@ def increase_score(conn, team_id: str, user_id: str, increase: int):
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
     execute_query(conn,
-                  f"""UPDATE points.{team_id}
+                  f"""UPDATE {team_id}
                   SET score = score + ?
                   WHERE user_id = ?""",
                   (increase, user_id)
@@ -35,7 +35,7 @@ def insert_user(conn, team_id: str, user_id: str, initial_score: int = 0):
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
     execute_query(conn,
-                  f"""INSERT INTO points.{team_id} (user_id, score)
+                  f"""INSERT INTO {team_id} (user_id, score)
                   VALUES (?, ?)""",
                   (user_id, initial_score)
                   )

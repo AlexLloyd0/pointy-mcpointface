@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 check_score_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> ?$")
 
 
-def get_score(form: ImmutableMultiDict) -> Dict[str, str]:
+def get_score(form: ImmutableMultiDict, test: bool = False) -> Dict[str, str]:
     logger.debug(f"Get score request: {form}")
     text = form.get('text', '')
     try:
@@ -21,7 +21,7 @@ def get_score(form: ImmutableMultiDict) -> Dict[str, str]:
     except GetScoreError:
         return ephemeral_resp(f"Could not parse {text}")
     team_id = form.get('team_id', '')
-    with connect() as conn:
+    with connect(test) as conn:
         try:
             score = check_score(conn, team_id, subject_id)
         except UserNotFound:

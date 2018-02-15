@@ -8,9 +8,9 @@ from pointy.database.team import setup_team
 logger = logging.getLogger(__name__)
 
 
-def add_team(form: ImmutableMultiDict):
+def add_team(form: ImmutableMultiDict, test: bool = False):
     logger.debug(f"Add team request: {form}")
     # TODO: get team id
     team_id = form['team_id']
-    with connect() as conn:
+    with connect(test) as conn:
         setup_team(conn, team_id)

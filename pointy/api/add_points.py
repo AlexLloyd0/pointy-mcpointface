@@ -15,7 +15,7 @@ MAX_SCORE_ADD = 20
 add_points_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> -?[0-9]+( .*)?$")
 
 
-def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
+def add_points(form: ImmutableMultiDict, test: bool = False) -> Dict[str, str]:
     logger.debug(f"Add points request: {form}")
     text = form.get('text', '')
     try:
@@ -28,7 +28,7 @@ def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
     if abs(points) > MAX_SCORE_ADD:
         return ephemeral_resp(f"Your team only allows adding {MAX_SCORE_ADD} points at once")
     team_id = form.get('team_id', '')
-    with connect() as conn:
+    with connect(test) as conn:
         try:
             current_score = check_score(conn, team_id, subject_id)
         except UserNotFound:

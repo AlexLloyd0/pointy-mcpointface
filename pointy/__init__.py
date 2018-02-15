@@ -10,7 +10,7 @@ from pointy.api.add_team import add_team
 from pointy.api.add_user import add_user
 from pointy.api.get_score import get_score
 from pointy.api.get_scoreboard import get_scoreboard, get_scoreboard_page
-from pointy.database.build import build_db
+from pointy.api.setup_db import setup_db
 from pointy.setup_logging import setup_logging
 
 setup_logging()
@@ -93,11 +93,6 @@ def interactive_route():
 @app.route('/oauth-redirect', methods=[''])
 def oauth_redirect():
     pass
-
-
-@app.route('/build')
-def build_route():
-    return build_db()
 
 
 def main():

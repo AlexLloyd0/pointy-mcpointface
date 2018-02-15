@@ -16,8 +16,8 @@ slackclient = "*"
 Flask = "*"
 gunicorn = "*"
 PyYAML = "*"
-Werkzeug = "==0.12"
 python-dotenv = "*"
+werkzeug = "*"
 
 
 [dev-packages]

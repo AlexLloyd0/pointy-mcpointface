@@ -9,7 +9,8 @@ from pointy.database.team import check_scores, check_all_scores
 logger = logging.getLogger(__name__)
 
 
-def get_scoreboard_page(form: ImmutableMultiDict, offset: int = None, limit: int = 10, ephemeral: bool = True) -> Dict[str, str]:
+def get_scoreboard_page(form: ImmutableMultiDict, offset: int = None, limit: int = 10,
+                        ephemeral: bool = True, test: bool = False) -> Dict[str, str]:
     logger.debug(f"Scoreboard request: offset {offset}; limit {limit}; form: {form}")
     if 'command' in form:
         team_id = form['team_id']
@@ -18,7 +19,7 @@ def get_scoreboard_page(form: ImmutableMultiDict, offset: int = None, limit: int
         team_id = form['team']['id']
         offset = offset if offset else int(form['actions'][0]['value'])
 
-    with connect() as conn:
+    with connect(test) as conn:
         # Try to fetch one more row. If limit + 1 rows come back, then there are more rows to display
         scoreboard_list = check_scores(conn, team_id, offset=offset, limit=limit+1)
     text, first, last = _parse_scoreboard(scoreboard_list, offset=offset, limit=limit)
@@ -75,10 +76,10 @@ def create_attachments(first: bool, last: bool, offset: int, limit: int):
 
 
 # depreciated
-def get_scoreboard(form: ImmutableMultiDict, ephemeral: bool = True) -> Dict[str, str]:
+def get_scoreboard(form: ImmutableMultiDict, ephemeral: bool = True, test: bool = False) -> Dict[str, str]:
     logger.debug(f"Scoreboard request: {form}")
     team_id = form.get('team_id', '')
-    with connect() as conn:
+    with connect(test) as conn:
         scoreboard_list = check_all_scores(conn, team_id)
     text = _parse_entire_scoreboard(scoreboard_list)
     return ephemeral_resp(text) if ephemeral else channel_resp(text)
