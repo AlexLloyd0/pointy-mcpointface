@@ -17,9 +17,7 @@ Flask = "*"
 gunicorn = "*"
 PyYAML = "*"
 Werkzeug = "==0.12"
-zappa = "*"
 python-dotenv = "*"
-PyMySQL = "*"
 
 
 [dev-packages]

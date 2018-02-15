@@ -1,41 +1,44 @@
 import logging
 import os
+import sqlite3
+from pathlib import Path
 from typing import Dict, List
-from urllib import parse
 
-import pymysql
 from dotenv import load_dotenv
 
-envfile = '.dev.env' if os.name == 'nt' else '.env'
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", envfile), override=True)
+DB_LOCATION = Path('data')
 
-parse.uses_netloc.append("postgres")
-
-RDS_HOST = os.environ.get("DB_HOST")
-RDS_PORT = int(os.environ.get("DB_PORT", 3306))
-NAME = os.environ.get("DB_USERNAME")
-PASSWORD = os.environ.get("DB_PASSWORD")
-DB_NAME = os.environ.get("DB_NAME")
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", '.env'), override=True)
 
 logger = logging.getLogger(__name__)
 
 
-def setup_db(conn):
+def connect(test=False):
+    logger.debug(f"Connecting to SQLite")
+    path = DB_LOCATION / 'test.db' if test else DB_LOCATION / 'live.db'
+    return sqlite3.connect(str(path))
+
+
+def execute_query(conn, query, parameters):
     with conn.cursor() as cur:
-        cur.execute("""CREATE SCHEMA points""")
-        cur.execute("""CREATE SCHEMA dbo""")
-        cur.execute("""CREATE TABLE dbo.teams (team_id TEXT PRIMARY KEY)""")
+        cur.execute(query, parameters)
     conn.commit()
 
 
-def connect():
-    logger.debug(f"Connecting to {RDS_HOST}")
-    return pymysql.connect(host=RDS_HOST,
-                           user=NAME,
-                           passwd=PASSWORD,
-                           port=RDS_PORT,
-                           cursorclass=pymysql.cursors.DictCursor,
-                           )
+def execute_query_fetchone(conn, query, parameters):
+    with conn.cursor() as cur:
+        cur.execute(query, parameters)
+        result = cur.fetchone()
+    conn.commit()
+    return result
+
+
+def execute_query_fetchall(conn, query, parameters):
+    with conn.cursor() as cur:
+        cur.execute(query, parameters)
+        result = cur.fetchall()
+    conn.commit()
+    return result
 
 
 def ephemeral_resp(text: str, attachments: List[Dict] = None) -> Dict[str, str]:

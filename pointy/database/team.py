@@ -1,10 +1,11 @@
 import os
+import sqlite3
 from typing import List, Tuple
 
-import pymysql
 from dotenv import load_dotenv
 from slackclient import SlackClient
 
+from pointy.database.common import execute_query, execute_query_fetchall
 from pointy.exceptions import InvalidIdError
 from pointy.utils import validate_id
 
@@ -18,22 +19,19 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
     if not validate_id(team_id):
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
+    try:
+        scoreboard = execute_query_fetchall(
                 f"""SELECT * FROM points.{team_id}
                 ORDER BY score DESC""",
                 ()
             )
-            scoreboard = cur.fetchall()
-        except pymysql.ProgrammingError:
-            conn.rollback()
-            setup_team(conn, team_id)
-            if retry:
-                return check_all_scores(conn, team_id, False)
-            else:
-                raise
-    conn.commit()
+    except sqlite3.ProgrammingError:
+        conn.rollback()
+        setup_team(conn, team_id)
+        if retry:
+            return check_all_scores(conn, team_id, False)
+        else:
+            raise
     return scoreboard
 
 
@@ -41,24 +39,21 @@ def check_scores(conn, team_id: str, offset: int, limit: int = 10, retry: bool =
     if not validate_id(team_id):
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
+    try:
+        scoreboard = execute_query_fetchall(
                 f"""SELECT * FROM points.{team_id}
                 ORDER BY score DESC
-                LIMIT %s
-                OFFSET %s""",
+                LIMIT ?
+                OFFSET ?""",
                 (str(limit), str(offset))
             )
-            scoreboard = cur.fetchall()
-        except pymysql.ProgrammingError:
-            conn.rollback()
-            setup_team(conn, team_id)
-            if retry:
-                return check_all_scores(conn, team_id, False)
-            else:
-                raise
-    conn.commit()
+    except sqlite3.ProgrammingError:
+        conn.rollback()
+        setup_team(conn, team_id)
+        if retry:
+            return check_all_scores(conn, team_id, False)
+        else:
+            raise
     return scoreboard
 
 
@@ -66,25 +61,21 @@ def setup_team(conn, team_id: str):
     if not validate_id(team_id):
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
+    try:
+        execute_query(conn, 
                 f"""CREATE TABLE points.{team_id} (
                 user_id TEXT PRIMARY KEY,
                 score INTEGER NOT NULL DEFAULT 0)""",
                 ()
             )
-        except pymysql.ProgrammingError:
-            pass
-        try:
-            cur.execute(
+        execute_query(conn, 
                 """INSERT INTO dbo.teams (team_id)
-                VALUES (%s)""",
+                VALUES (?)""",
                 (team_id,)
             )
-        except pymysql.ProgrammingError:
-            pass
-    conn.commit()
+    except sqlite3.ProgrammingError:
+        conn.rollback()
+        raise
     user_ids = []
     slack_client = SlackClient(api_token)
     resp = slack_client.api_call(
@@ -98,28 +89,27 @@ def setup_team(conn, team_id: str):
     with conn.cursor() as cur:
         cur.executemany(
             f"""INSERT INTO points.{team_id} (user_id, score)
-            VALUES (%s, 0)""", (user_ids,)
+            VALUES (?, 0)""", (user_ids,)
         )
+        cur.commit()
 
 
 def remove_team(conn, team_id: str):
     if not validate_id(team_id):
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
+    try:
+        execute_query(conn,
                 f"""DROP TABLE points.{team_id}""",
                 ()
             )
-        except pymysql.ProgrammingError:
-            conn.rollback()
-        try:
-            cur.execute(
+    except sqlite3.ProgrammingError:
+        conn.rollback()
+    try:
+        execute_query(conn, 
                 """DELETE FROM dbo.teams
-                WHERE team_id = %s""",
+                WHERE team_id = ?""",
                 (team_id,)
             )
-        except pymysql.ProgrammingError:
-            conn.rollback()
-    conn.commit()
+    except sqlite3.ProgrammingError:
+        conn.rollback()

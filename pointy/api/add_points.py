@@ -5,7 +5,7 @@ from typing import Tuple, Dict
 from werkzeug.datastructures import ImmutableMultiDict
 
 from pointy.database.common import connect, ephemeral_resp, channel_resp
-from pointy.database.user import check_score, update_score
+from pointy.database.user import check_score, increase_score
 from pointy.exceptions import AddPointsError, UserNotFound
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ def add_points(form: ImmutableMultiDict) -> Dict[str, str]:
         except UserNotFound:
             return ephemeral_resp("User not found.")
         new_score = current_score + points
-        update_score(conn, team_id, subject_id, new_score)
+        increase_score(conn, team_id, subject_id, points)
         return channel_resp(f"<@{subject_id}>: {current_score} -> {new_score} {reason}")
 
 
