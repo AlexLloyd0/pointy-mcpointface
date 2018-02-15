@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, List, Tuple
-
-from werkzeug.datastructures import ImmutableMultiDict
+from typing import Mapping
 
 from pointy.database.common import connect, channel_resp, ephemeral_resp
 from pointy.database.team import check_scores, check_all_scores
@@ -9,7 +8,7 @@ from pointy.database.team import check_scores, check_all_scores
 logger = logging.getLogger(__name__)
 
 
-def get_scoreboard_page(form: ImmutableMultiDict, offset: int = None, limit: int = 10,
+def get_scoreboard_page(form: Mapping, offset: int = None, limit: int = 10,
                         ephemeral: bool = True, test: bool = False) -> Dict[str, str]:
     logger.debug(f"Scoreboard request: offset {offset}; limit {limit}; form: {form}")
     if 'command' in form:
@@ -76,7 +75,7 @@ def create_attachments(first: bool, last: bool, offset: int, limit: int):
 
 
 # depreciated
-def get_scoreboard(form: ImmutableMultiDict, ephemeral: bool = True, test: bool = False) -> Dict[str, str]:
+def get_scoreboard(form: Mapping, ephemeral: bool = True, test: bool = False) -> Dict[str, str]:
     logger.debug(f"Scoreboard request: {form}")
     team_id = form.get('team_id', '')
     with connect(test) as conn:

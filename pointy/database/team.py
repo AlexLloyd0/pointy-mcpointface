@@ -41,6 +41,7 @@ def check_scores(conn, team_id: str, offset: int, limit: int = 10, retry: bool =
     try:
         scoreboard = execute_query_fetchall(conn,
                                             f"""SELECT * FROM {team_id}
+                                            WHERE score != 0
                                             ORDER BY score DESC
                                             LIMIT ?
                                             OFFSET ?""",
@@ -85,8 +86,8 @@ def setup_team(conn, team_id: str):
     with closing(conn.cursor()) as cur:
         cur.executemany(
             f"""INSERT INTO {team_id} (user_id, score)
-            VALUES (?, 0)""", (user_ids,))
-        cur.commit()
+            VALUES (?, 0)""", [(user_id,) for user_id in user_ids])
+    conn.commit()
 
 
 def remove_team(conn, team_id: str):

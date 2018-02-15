@@ -1,6 +1,5 @@
 import logging
-
-from werkzeug.datastructures import ImmutableMultiDict
+from typing import Mapping
 
 from pointy.database.common import connect
 from pointy.database.user import insert_user
@@ -8,7 +7,7 @@ from pointy.database.user import insert_user
 logger = logging.getLogger(__name__)
 
 
-def add_user(form: ImmutableMultiDict, test: bool = False):
+def add_user(form: Mapping, test: bool = False):
     logger.debug(f"Add team request: {form}")
     user = form.get('user')
     with connect(test) as conn:

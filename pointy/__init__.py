@@ -26,6 +26,7 @@ verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 @app.route('/add-points', methods=['POST'])
 def add_points_route():
     form = request.form
+    logger.debug(f"/add-points request: {form}")
     if form.get('token') != verify_token:
         return "Incorrect verification token", 403
     if form.get('command') != '/points':
@@ -36,6 +37,7 @@ def add_points_route():
 @app.route('/get-score', methods=['POST'])
 def get_score_route():
     form = request.form
+    logger.debug(f"/get-score request: {form}")
     if form.get('token') != verify_token:
         return "Incorrect verification token", 403
     if form.get('command') != '/score':
@@ -46,6 +48,7 @@ def get_score_route():
 @app.route('/get-scoreboard', methods=['POST'])
 def get_scoreboard_route():
     form = request.form
+    logger.debug(f"/get-scoreboard request: {form}")
     if form.get('token') != verify_token:
         return "Incorrect verification token", 403
     if form.get('command') != '/leaderboard':
@@ -56,6 +59,7 @@ def get_scoreboard_route():
 @app.route('/add-team', methods=['POST'])
 def add_team_route():
     form = request.form
+    logger.debug(f"/add-team request: {form}")
     if form.get('token') != verify_token:
         return "Incorrect verification token", 403
     return jsonify(add_team(form))
@@ -64,6 +68,7 @@ def add_team_route():
 @app.route('/event-endpoint', methods=['POST'])
 def action_route():
     form = request.form
+    logger.debug(f"/event-endpoint request: {form}")
     # json_ is only for url verification
     json_ = request.get_json(silent=True)
     if form.get('token') != verify_token and json_.get('token') != verify_token:
@@ -78,7 +83,9 @@ def action_route():
 
 @app.route('/interactive-endpoint', methods=['POST'])
 def interactive_route():
-    payload = request.form.get('payload', {})
+    form = request.form
+    logger.debug(f"/interactive-endpoint request: {form}")
+    payload = form.get('payload', {})
     try:
         form = json.loads(payload)
     except json.decoder.JSONDecodeError:

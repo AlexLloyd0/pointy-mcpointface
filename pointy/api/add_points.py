@@ -1,8 +1,6 @@
 import logging
 import re
-from typing import Tuple, Dict
-
-from werkzeug.datastructures import ImmutableMultiDict
+from typing import Tuple, Dict, Mapping
 
 from pointy.database.common import connect, ephemeral_resp, channel_resp
 from pointy.database.user import check_score, increase_score
@@ -15,7 +13,7 @@ MAX_SCORE_ADD = 20
 add_points_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> -?[0-9]+( .*)?$")
 
 
-def add_points(form: ImmutableMultiDict, test: bool = False) -> Dict[str, str]:
+def add_points(form: Mapping, test: bool = False) -> Dict[str, str]:
     logger.debug(f"Add points request: {form}")
     text = form.get('text', '')
     try:

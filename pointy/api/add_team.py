@@ -1,6 +1,5 @@
 import logging
-
-from werkzeug.datastructures import ImmutableMultiDict
+from typing import Mapping
 
 from pointy.database.common import connect
 from pointy.database.team import setup_team
@@ -8,7 +7,7 @@ from pointy.database.team import setup_team
 logger = logging.getLogger(__name__)
 
 
-def add_team(form: ImmutableMultiDict, test: bool = False):
+def add_team(form: Mapping, test: bool = False):
     logger.debug(f"Add team request: {form}")
     # TODO: get team id
     team_id = form['team_id']

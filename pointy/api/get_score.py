@@ -1,8 +1,7 @@
 import logging
 import re
 from typing import Dict
-
-from werkzeug.datastructures import ImmutableMultiDict
+from typing import Mapping
 
 from pointy.database.common import connect, ephemeral_resp, channel_resp
 from pointy.database.user import check_score
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 check_score_re = re.compile("^<@[A-Z][a-zA-Z0-9]+(\|[^>]*)?> ?$")
 
 
-def get_score(form: ImmutableMultiDict, test: bool = False) -> Dict[str, str]:
+def get_score(form: Mapping, test: bool = False) -> Dict[str, str]:
     logger.debug(f"Get score request: {form}")
     text = form.get('text', '')
     try:
