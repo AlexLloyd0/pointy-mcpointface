@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-envfile = '.dev.env' if os.name == 'nt' else '.env'
+envfile = '.env'
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", envfile), override=True)
 verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 
