@@ -20,11 +20,11 @@ def check_all_scores(conn, team_id: str, retry: bool = True) -> List[Tuple[str, 
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
     try:
-        scoreboard = execute_query_fetchall(
-                f"""SELECT * FROM points.{team_id}
-                ORDER BY score DESC""",
-                ()
-            )
+        scoreboard = execute_query_fetchall(conn,
+                                            f"""SELECT * FROM points.{team_id}
+                                            ORDER BY score DESC""",
+                                            ()
+                                            )
     except sqlite3.ProgrammingError:
         conn.rollback()
         setup_team(conn, team_id)
@@ -40,13 +40,13 @@ def check_scores(conn, team_id: str, offset: int, limit: int = 10, retry: bool =
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
     try:
-        scoreboard = execute_query_fetchall(
-                f"""SELECT * FROM points.{team_id}
-                ORDER BY score DESC
-                LIMIT ?
-                OFFSET ?""",
-                (str(limit), str(offset))
-            )
+        scoreboard = execute_query_fetchall(conn,
+                                            f"""SELECT * FROM points.{team_id}
+                                            ORDER BY score DESC
+                                            LIMIT ?
+                                            OFFSET ?""",
+                                            (str(limit), str(offset))
+                                            )
     except sqlite3.ProgrammingError:
         conn.rollback()
         setup_team(conn, team_id)
@@ -62,17 +62,17 @@ def setup_team(conn, team_id: str):
         raise InvalidIdError(f"{team_id} is not a valid team_id")
 
     try:
-        execute_query(conn, 
-                f"""CREATE TABLE points.{team_id} (
-                user_id TEXT PRIMARY KEY,
-                score INTEGER NOT NULL DEFAULT 0)""",
-                ()
-            )
-        execute_query(conn, 
-                """INSERT INTO dbo.teams (team_id)
-                VALUES (?)""",
-                (team_id,)
-            )
+        execute_query(conn,
+                      f"""CREATE TABLE points.{team_id} (
+                      user_id TEXT PRIMARY KEY,
+                      score INTEGER NOT NULL DEFAULT 0)""",
+                      ()
+                      )
+        execute_query(conn,
+                      """INSERT INTO dbo.teams (team_id)
+                      VALUES (?)""",
+                      (team_id,)
+                      )
     except sqlite3.ProgrammingError:
         conn.rollback()
         raise
@@ -100,16 +100,16 @@ def remove_team(conn, team_id: str):
 
     try:
         execute_query(conn,
-                f"""DROP TABLE points.{team_id}""",
-                ()
-            )
+                      f"""DROP TABLE points.{team_id}""",
+                      ()
+                      )
     except sqlite3.ProgrammingError:
         conn.rollback()
     try:
-        execute_query(conn, 
-                """DELETE FROM dbo.teams
-                WHERE team_id = ?""",
-                (team_id,)
-            )
+        execute_query(conn,
+                      """DELETE FROM dbo.teams
+                      WHERE team_id = ?""",
+                      (team_id,)
+                      )
     except sqlite3.ProgrammingError:
         conn.rollback()
