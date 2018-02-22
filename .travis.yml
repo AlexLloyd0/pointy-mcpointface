@@ -1,10 +1,27 @@
+sudo: required
 language: python
 python:
-  - 3.6
-
+- 3.6
+services:
+- docker
+env:
+  global:
+  - DOCKER_USERNAME=alexlloyd
+  - secure: Z+IYweKzq4pnnPhW7t86RwfPtblM98Rj6r/DkDNbPKp0bEAhK37e0gv0Bg2pf/Sag8JGOgqVnqrbgCcemYCOdb67XtA36esbHJANe4LTud12TkveC2bBqCLpXD7012aqDkOwXnFRKdKaYsKEP/fPYVWrhslmbeo+6ANqWwId0avIlRQm5cD+o9BQ13rrubGgUqbwPrDFk+9IAB1aopMTxv6NjtMkY0zGtUGbx/Og2MSRYVxzjpxjLmiUxNcWnU+0FzXSlvMOHoJPYBysvJs+9bzXMa2hdGZotvgQKhjJR431BK8wrGK+4iAV4LGgDGPycjBWjobAMj5/DQak4nT5MwfR6Zbk07mplaadUF3Qd/TyoLvtHM0ShX7kXU5UQPRRLXpnLY6maUz2no5YcuERR88Ax1gFrysY2kVop0R17svygFhUI21kmN8sM4dBFr2KDVDd8qkbI3+HVj0YS+mYq8DWucjGgmVvN/PwVvVkp/js1UKgB6xRJixKC+da6xATcywkYanNfKRnqQEfbffee8PX4xY8Q+08hzo+G8ATnebh+Lz3LQg81+bsaF0rvDgppbeTFxiDbtNyBwGzf4taOUMC3VlLfHKdYpllMTBybuWTBABOWD++3iRDpPPi164OnW8t8PZdoLm3OCFLCCUzCUie6IhCUd77Vzs56zF82OQ=
+  - secure: Yz8sqd7RikJ+rXJTrS9yxyn9qKEquzJXKoW7q4EnCDPWaIuvOXq9rVCWZkBHhT/HA16/4ixWpRMzP5HUJl1whx+kvB0GuSvrtlRGInq+Iu4GUvAZRJxJDcRhWJde/aT1VGEM2y3kCXMN9bFl7NTmIS2XF5W332oc5/6kYqKgWhJ1LiVi3H+VpoQPvlT23+4E8tnP2TU5mKm+e5/drbQTEgHm8yCwaQmJQmwe7WXT1Di4fR/XmKHX82QMqOSLM2tByRjdPyn1znHcGLSQb3r/eDEK9Fw6jr9tEPHEk+zsKkq/50EbKhmBMKKh3fH/uf/Sl6zwYYEfXK+BfJ9N4KCH51sCQy2QOkAsJpKGBzVPIfuOXPku0Aj0EhBQpHZdNm9GV3YlsdWp9/b+I0WrwtVYJeFK9g3xeqmavkrF78SQ7QgUM+KIVNdITuZF4cnY5ABrF48jUFiGsZPbD2yeIJLU3DneEpZXj9oVgswZCHex/Kv/ODE6su7PF9YZEuL3+unP/VWhkv6Nd4WqxWmtCjOESmiZukq27K2Rbv0niE6eZ/qaXxP77oKBkF38UvmR/WAbdrysk3XowXBqdOFtKAq05rHLPeZ19r8mL+qP1/YOAWMaoENAAFTDT7iMnqSV0iuB0hgi1hiFy3/BqA/eMI7zJ8k5dPWF7dk8dyze7+J19dE=
 install:
-  - pip install pipenv pycodestyle
-  - pipenv install
-
+- pip install pipenv pycodestyle mypy
+- pipenv install --dev
+before_script:
+- pycodestyle
+- mypy run.py pointy --ignore-missing-imports
 script:
-  - pycodestyle
+- docker build --tag pointy:$TRAVIS_BRANCH .
+after_success:
+- docker run -d pointy:$TRAVIS_BRANCH -e POINTY_VERIFY_TOKEN  # token is encrypted above
+deploy:
+  provider: script
+  script: bash docker_push
+  on:
+    branch: linode
+    tags: true

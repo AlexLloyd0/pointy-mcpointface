@@ -3,15 +3,11 @@ import sqlite3
 from contextlib import closing
 from typing import List, Tuple
 
-from dotenv import load_dotenv
 from slackclient import SlackClient
 
 from pointy.database.common import execute_query, execute_query_fetchall
 from pointy.exceptions import InvalidIdError
 from pointy.utils import validate_id
-
-envfile = '.dev.env' if os.name == 'nt' else '.env'
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", envfile), override=True)
 
 api_token = os.environ.get('POINTY_APP_TOKEN')
 

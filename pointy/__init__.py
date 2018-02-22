@@ -2,7 +2,6 @@ import json
 import logging
 import os
 
-from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 
 from pointy.api.add_points import add_points
@@ -18,8 +17,6 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-envfile = '.env'
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", envfile), override=True)
 verify_token = os.environ.get('POINTY_VERIFY_TOKEN')
 
 

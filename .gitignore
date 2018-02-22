@@ -110,3 +110,4 @@ venv.bak/
 scores.json
 /latest.dump
 /.dev.env
+transfer.py

@@ -1,15 +1,10 @@
 import logging
-import os
 import sqlite3
 from contextlib import closing
 from pathlib import Path
 from typing import Dict, List
 
-from dotenv import load_dotenv
-
 DB_LOCATION = Path('data')
-
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", '.env'), override=True)
 
 logger = logging.getLogger(__name__)
 

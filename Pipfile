@@ -16,12 +16,10 @@ slackclient = "*"
 Flask = "*"
 gunicorn = "*"
 PyYAML = "*"
-python-dotenv = "*"
-werkzeug = "*"
 
 
 [dev-packages]
 
 pycodestyle = "*"
 mypy = "*"
-awscli = "*"
+pytest = "*"

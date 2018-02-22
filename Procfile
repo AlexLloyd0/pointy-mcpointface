@@ -1,1 +1,0 @@
-web: gunicorn pointy:app --log-file -
