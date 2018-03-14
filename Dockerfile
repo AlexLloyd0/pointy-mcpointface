@@ -16,12 +16,9 @@ COPY /Pipfile /Pipfile
 COPY /Pipfile.lock /Pipfile.lock
 
 
-# -- Install Pipenv:
+# -- Install Pipenv and install dependencies:
 RUN set -ex && pip install pipenv --upgrade
-
-# -- Install dependencies:
 RUN set -ex && pipenv install --deploy --system
 
-# TODO: something like EXPOSE 80
-
+EXPOSE 8080
 ENTRYPOINT ["gunicorn", "run:app"]
