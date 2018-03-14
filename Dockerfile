@@ -20,5 +20,5 @@ COPY /Pipfile.lock /Pipfile.lock
 RUN set -ex && pip install pipenv --upgrade
 RUN set -ex && pipenv install --deploy --system
 
-EXPOSE 8080
+EXPOSE 8000
 ENTRYPOINT ["gunicorn", "run:app"]
