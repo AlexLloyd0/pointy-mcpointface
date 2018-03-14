@@ -25,4 +25,4 @@ deploy:
   script: bash docker_push
   on:
     branch: linode
-    tags: true
+#    tags: true
